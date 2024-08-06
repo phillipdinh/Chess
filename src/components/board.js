@@ -1,6 +1,8 @@
 import React, { useState } from "react"
 
 import Square from "./square"
+import GameInfo from "./gameInfo"
+
 import "../styles.css"
 
 export default function Board() {
@@ -13,6 +15,7 @@ export default function Board() {
     */
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
+	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
 
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = board[row][col]
@@ -39,12 +42,35 @@ export default function Board() {
 
 			if (isValidMove) {
 				movePiece(selectedColor, selectedRow, selectedCol, row, col)
+			} else {
+				//TODO Bad move warning pop up
+				setSelectedPiece(null)
 			}
 		} else if (clickedSquare.piece) {
 			setSelectedPiece(clickedSquare)
 		}
 	}
+	const movePiece = (color, fromRow, fromCol, toRow, toCol) => {
+		const newBoard = board.map((row) => row.map((square) => ({ ...square }))) // Clone the board
+
+		if ((isWhiteTurn && color == "black") || (!isWhiteTurn && color == "white")) {
+			setSelectedPiece(null)
+			console.log("Not your piece")
+			return false
+		}
+		// Move the piece
+		newBoard[toRow][toCol].piece = newBoard[fromRow][fromCol].piece
+		newBoard[toRow][toCol].color = color
+		newBoard[fromRow][fromCol].piece = null
+		newBoard[fromRow][fromCol].color = null
+
+		setBoard(newBoard)
+		setSelectedPiece(null)
+		setIsWhiteTurn((prevTurn) => !prevTurn)
+	}
 	const validateMove = (pieceType, color, fromRow, fromCol, toRow, toCol) => {
+		// Check if turn color and piece color match
+
 		switch (pieceType.toLowerCase()) {
 			case "p":
 				return validatePawnMove(color, fromRow, fromCol, toRow, toCol)
@@ -223,35 +249,27 @@ export default function Board() {
 			return false
 		}
 	}
-	const movePiece = (color, fromRow, fromCol, toRow, toCol) => {
-		const newBoard = board.map((row) => row.map((square) => ({ ...square }))) // Clone the board
-
-		// Move the piece
-		newBoard[toRow][toCol].piece = newBoard[fromRow][fromCol].piece
-		newBoard[toRow][toCol].color = color
-		newBoard[fromRow][fromCol].piece = null
-		newBoard[fromRow][fromCol].color = null
-
-		setBoard(newBoard)
-		setSelectedPiece(null) // Deselect piece after moving
-	}
 
 	return (
-		<div className="board">
-			{board.map((row, rowIndex) => (
-				<div key={rowIndex} className="board-row">
-					{row.map((square, colIndex) => (
-						<Square
-							row={rowIndex}
-							col={colIndex}
-							piece={square.piece}
-							color={square.color}
-							onClick={() => handleSquareClick(rowIndex, colIndex)}
-						/>
-					))}
-				</div>
-			))}
-		</div>
+		<>
+			<div className="board">
+				{board.map((row, rowIndex) => (
+					<div key={rowIndex} className="board-row">
+						{row.map((square, colIndex) => (
+							<Square
+								key={`${rowIndex}-${colIndex}`}
+								row={rowIndex}
+								col={colIndex}
+								piece={square.piece}
+								color={square.color}
+								onClick={() => handleSquareClick(rowIndex, colIndex)}
+							/>
+						))}
+					</div>
+				))}
+			</div>
+			<GameInfo turn={isWhiteTurn} />
+		</>
 	)
 }
 
