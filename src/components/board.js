@@ -4,7 +4,13 @@ import Square from "./square"
 import "../styles.css"
 
 export default function Board() {
-	// TODO Turns, Deselect piece when bad move is done highlight possible pieces
+	/* TODO 
+    - Turns
+    - Deselect piece when bad move is done 
+        - Blocked piece
+        - Same square clicked
+    - Highlight possible squares and captures
+    */
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
 
@@ -50,8 +56,8 @@ export default function Board() {
 				return validateKnightMove(fromRow, fromCol, toRow, toCol)
 			case "q":
 				return validateQueenMove(fromRow, fromCol, toRow, toCol)
-			// case "k":
-			// 	return validateKingMove(fromRow, fromCol, toRow, toCol)
+			case "k":
+				return validateKingMove(fromRow, fromCol, toRow, toCol)
 			default:
 				return false // Invalid piece
 		}
@@ -201,6 +207,21 @@ export default function Board() {
 		}
 
 		return true
+	}
+	const validateKingMove = (fromRow, fromCol, toRow, toCol) => {
+		//TODO:
+		console.log("From    : ", fromRow, fromCol)
+		console.log("To (R,C): ", toRow, toCol)
+
+		if (
+			Math.max(Math.abs(fromRow - toRow), Math.abs(fromCol - toCol)) <= 1 &&
+			!board[toRow][toCol].piece
+		) {
+			return true
+		} else {
+			console.log("Blocked by piece:", board[toRow][toCol])
+			return false
+		}
 	}
 	const movePiece = (color, fromRow, fromCol, toRow, toCol) => {
 		const newBoard = board.map((row) => row.map((square) => ({ ...square }))) // Clone the board
