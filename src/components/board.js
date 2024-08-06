@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 
 import Square from "./square"
 import GameInfo from "./gameInfo"
@@ -13,16 +13,15 @@ export default function Board() {
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
 	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
+	const whiteKing = useRef({ row: 0, col: 4 })
+	const blackKing = useRef({ row: 7, col: 4 })
 
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = board[row][col]
 
-		//console.log("clicked: ", clickedSquare)
-
 		if (selectedPiece) {
 			const { row: selectedRow, col: selectedCol } = selectedPiece
 
-			// Handle movement based on the type of piece
 			const isValidMove = validateMove(selectedRow, selectedCol, row, col)
 
 			if (isValidMove) {
@@ -85,7 +84,6 @@ export default function Board() {
 			console.log("Bad")
 			return false
 		}
-
 		if (fromRow === toRow) {
 			let startCol = Math.min(fromCol, toCol)
 			let endCol = Math.max(fromCol, toCol)
@@ -110,7 +108,7 @@ export default function Board() {
 		return true
 	}
 	const validateDiagonalMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO add capture tally
+		//TODO capture tally
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
 
@@ -139,35 +137,41 @@ export default function Board() {
 	}
 	const validatePawnMove = (fromRow, fromCol, toRow, toCol) => {
 		//TODO: Add starting check (double), promotion, enpassant
-		// White moves up (-1), Black moves down (+1)
+
 		const toColor = board[toRow][toCol].color
 		const fromColor = board[fromRow][fromCol].color
 		const direction = fromColor === "white" ? -1 : 1
 
 		//prettier-ignore
+		const isFirstMove = (fromRow === 1 && fromColor === "black") || 
+                            (fromRow === 6 && fromColor === "white")
 		const isDiagonalMove = Math.abs(fromCol - toCol) === 1 && toRow === fromRow + direction
 		const isForwardMove = toRow === fromRow + direction && toCol === fromCol
+		const isDoubleMove = isFirstMove && toRow === fromRow + direction * 2 && toCol === fromCol
 
-		// Check capture (diagonal move)
 		if (isDiagonalMove && toColor && fromColor !== toColor) {
-			// TODO: Add capture tally
 			return true
 		}
 
-		if (isForwardMove && toColor == null) {
-			return true
+		if (toColor != null) {
+			return false
 		}
 
+		if (isForwardMove) {
+			return true
+		}
+		if (isDoubleMove && board[toRow - direction][toCol].color == null) {
+			return true
+		}
 		console.log("Bad Move")
 		return false
 	}
 	const validateRookMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: capture, check if piece in between
 		return validateOrthogonalMove(fromRow, fromCol, toRow, toCol)
 	}
 
 	const validateBishopMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: capture
+		//TODO: capture tally
 		return validateDiagonalMove(fromRow, fromCol, toRow, toCol)
 	}
 	const validateKnightMove = (fromRow, fromCol, toRow, toCol) => {
@@ -188,14 +192,22 @@ export default function Board() {
 		return false
 	}
 	const validateQueenMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: capture
+		//TODO: capture tally
 		return (
 			validateOrthogonalMove(fromRow, fromCol, toRow, toCol) ||
 			validateDiagonalMove(fromRow, fromCol, toRow, toCol)
 		)
 	}
 	const validateKingMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: Check, checkmate, draw, can't put self in check, capture tally
+		/*
+        TODO
+        - Check
+        - checkmate
+        - draw
+        - can't put self in check
+        - capture tally
+        - update king square
+        */
 		if (
 			Math.max(Math.abs(fromRow - toRow), Math.abs(fromCol - toCol)) > 1 ||
 			board[fromRow][fromCol].color === board[toRow][toCol].color
@@ -204,6 +216,25 @@ export default function Board() {
 			return false
 		}
 		return true
+	}
+
+	const KingStatus = (fromRow, fromCol) => {
+		// Look at color of piece moved
+		// Look for king
+		// Check every piece on board and validate it against King
+
+		const fromColor = board[fromRow][fromCol].color
+		const king = fromColor === "white" ? whiteKing : blackKing
+		board.forEach((row) => {
+			row.forEach((square) => {
+				// if (square.color !== fromColor) {
+				//     continue
+
+				// }
+				// If valid then it is in check
+				validateMove(square.row, square.col, king.row, king.col)
+			})
+		})
 	}
 
 	return (
