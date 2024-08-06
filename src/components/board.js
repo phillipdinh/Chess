@@ -4,11 +4,14 @@ import Square from "./square"
 import "../styles.css"
 
 export default function Board() {
+	// TODO Turns
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
 
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = board[row][col]
+
+		//console.log("clicked: ", clickedSquare)
 
 		if (selectedPiece) {
 			const {
@@ -39,12 +42,12 @@ export default function Board() {
 		switch (pieceType.toLowerCase()) {
 			case "p":
 				return validatePawnMove(color, fromRow, fromCol, toRow, toCol)
-			// case "r":
-			// 	return validateRookMove(fromRow, fromCol, toRow, toCol)
+			case "r":
+				return validateRookMove(fromRow, fromCol, toRow, toCol)
+			case "b":
+				return validateBishopMove(fromRow, fromCol, toRow, toCol)
 			case "n":
 				return validateKnightMove(fromRow, fromCol, toRow, toCol)
-			// case "b":
-			// 	return validateBishopMove(fromRow, fromCol, toRow, toCol)
 			// case "q":
 			// 	return validateQueenMove(fromRow, fromCol, toRow, toCol)
 			// case "k":
@@ -55,9 +58,9 @@ export default function Board() {
 	}
 	const validatePawnMove = (color, fromRow, fromCol, toRow, toCol) => {
 		//TODO: Add starting check (double), capture, promotion
-		const direction = color == "white" ? -1 : 1 // White moves up (-1), Black moves down (+1)
-		console.log("From: ", fromRow, fromCol)
-		console.log("To: ", toRow, toCol)
+		const direction = color === "white" ? -1 : 1 // White moves up (-1), Black moves down (+1)
+		console.log("From    : ", fromRow, fromCol)
+		console.log("To (R,C): ", toRow, toCol)
 
 		// Check Normal move
 		if (
@@ -71,9 +74,71 @@ export default function Board() {
 			return false
 		}
 	}
+	const validateRookMove = (fromRow, fromCol, toRow, toCol) => {
+		//TODO: capture, check if piece in between
+		console.log("From: ", fromRow, fromCol)
+		console.log("To: ", toRow, toCol)
 
+		// TODO clean up redundancy
+		// Horizontal and Vertical
+		if ((fromRow === toRow || fromCol === toCol) && !board[toRow][toCol].piece) {
+			// Check if piece is in the way
+			if (fromRow === toRow) {
+				let startCol = Math.min(fromCol, toCol)
+				let endCol = Math.max(fromCol, toCol)
+				for (let col = startCol + 1; col <= endCol - 1; col++) {
+					if (board[toRow][col].piece) {
+						console.log("Blocked by piece at", board[col][toRow])
+						console.log()
+						return false
+					}
+				}
+			} else {
+				let startRow = Math.min(fromRow, toRow)
+				let endRow = Math.max(fromRow, toRow)
+				for (let row = startRow + 1; row < endRow; row++) {
+					console.log(row)
+					if (board[row][toCol].piece) {
+						console.log("Blocked by piece at", board[toCol][row])
+						return false
+					}
+				}
+			}
+			return true
+		} else {
+			console.log("Bad")
+			return false
+		}
+	}
+
+	const validateBishopMove = (fromRow, fromCol, toRow, toCol) => {
+		//TODO: capture, check if piece in between
+		console.log("From: ", fromRow, fromCol)
+		console.log("To: ", toRow, toCol)
+
+		const rowDiff = Math.abs(fromRow - toRow)
+		const colDiff = Math.abs(fromCol - toCol)
+
+		const rowDirection = toRow > fromRow ? 1 : -1
+		const colDirection = toCol > fromCol ? 1 : -1
+
+		let currentRow = fromRow + rowDirection
+		let currentCol = fromCol + colDirection
+
+		// Diagonal
+		while (currentRow != toRow && currentCol != toCol) {
+			if (board[currentRow][currentCol].piece) {
+				console.log("Blocked by piece at", currentRow, currentCol)
+				return false
+			}
+			currentRow += rowDirection
+			currentCol += colDirection
+		}
+
+		return true
+	}
 	const validateKnightMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: Add starting check (double), capture, promotion
+		//TODO: capture
 		console.log("From: ", fromRow, fromCol)
 		console.log("To: ", toRow, toCol)
 
@@ -81,7 +146,10 @@ export default function Board() {
 		const colDiff = Math.abs(fromCol - toCol)
 
 		// L Shape
-		if (!board[toRow][toCol].piece) {
+		if (
+			((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2)) &&
+			!board[toRow][toCol].piece
+		) {
 			return true
 		} else {
 			console.log("Bad")
