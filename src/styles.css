@@ -1,0 +1,35 @@
+.board {
+	display: flex;
+	flex-direction: column;
+	width: 320px;
+	height: 320px;
+	border: 2px solid black;
+}
+
+.board-row {
+	display: flex;
+}
+
+.board-square {
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.board-square.light {
+	background-color: #f0d9b5;
+}
+
+.board-square.dark {
+	background-color: #b58863;
+}
+
+.white {
+	color: white;
+}
+
+.black {
+	color: black;
+}
