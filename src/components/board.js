@@ -4,7 +4,7 @@ import Square from "./square"
 import "../styles.css"
 
 export default function Board() {
-	// TODO Turns
+	// TODO Turns, Deselect piece when bad move is done highlight possible pieces
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
 
@@ -48,8 +48,8 @@ export default function Board() {
 				return validateBishopMove(fromRow, fromCol, toRow, toCol)
 			case "n":
 				return validateKnightMove(fromRow, fromCol, toRow, toCol)
-			// case "q":
-			// 	return validateQueenMove(fromRow, fromCol, toRow, toCol)
+			case "q":
+				return validateQueenMove(fromRow, fromCol, toRow, toCol)
 			// case "k":
 			// 	return validateKingMove(fromRow, fromCol, toRow, toCol)
 			default:
@@ -82,13 +82,12 @@ export default function Board() {
 		// TODO clean up redundancy
 		// Horizontal and Vertical
 		if ((fromRow === toRow || fromCol === toCol) && !board[toRow][toCol].piece) {
-			// Check if piece is in the way
 			if (fromRow === toRow) {
 				let startCol = Math.min(fromCol, toCol)
 				let endCol = Math.max(fromCol, toCol)
 				for (let col = startCol + 1; col <= endCol - 1; col++) {
 					if (board[toRow][col].piece) {
-						console.log("Blocked by piece at", board[col][toRow])
+						console.log("Blocked by piece:", board[col][toRow])
 						console.log()
 						return false
 					}
@@ -99,7 +98,7 @@ export default function Board() {
 				for (let row = startRow + 1; row < endRow; row++) {
 					console.log(row)
 					if (board[row][toCol].piece) {
-						console.log("Blocked by piece at", board[toCol][row])
+						console.log("Blocked by piece:", board[toCol][row])
 						return false
 					}
 				}
@@ -112,12 +111,9 @@ export default function Board() {
 	}
 
 	const validateBishopMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: capture, check if piece in between
+		//TODO: capture
 		console.log("From: ", fromRow, fromCol)
 		console.log("To: ", toRow, toCol)
-
-		const rowDiff = Math.abs(fromRow - toRow)
-		const colDiff = Math.abs(fromCol - toCol)
 
 		const rowDirection = toRow > fromRow ? 1 : -1
 		const colDirection = toCol > fromCol ? 1 : -1
@@ -126,9 +122,9 @@ export default function Board() {
 		let currentCol = fromCol + colDirection
 
 		// Diagonal
-		while (currentRow != toRow && currentCol != toCol) {
+		while (currentRow !== toRow && currentCol !== toCol) {
 			if (board[currentRow][currentCol].piece) {
-				console.log("Blocked by piece at", currentRow, currentCol)
+				console.log("Blocked by piece:", board[currentRow][currentCol])
 				return false
 			}
 			currentRow += rowDirection
@@ -156,7 +152,56 @@ export default function Board() {
 			return false
 		}
 	}
+	const validateQueenMove = (fromRow, fromCol, toRow, toCol) => {
+		//TODO: capture, Push bishop and rook checks in functions
+		console.log("From: ", fromRow, fromCol)
+		console.log("To: ", toRow, toCol)
 
+		///////////////// Rook ///////////////////////
+		if ((fromRow === toRow || fromCol === toCol) && !board[toRow][toCol].piece) {
+			if (fromRow === toRow) {
+				let startCol = Math.min(fromCol, toCol)
+				let endCol = Math.max(fromCol, toCol)
+				for (let col = startCol + 1; col <= endCol - 1; col++) {
+					if (board[toRow][col].piece) {
+						console.log("Blocked by piece:", board[col][toRow])
+						console.log()
+						return false
+					}
+				}
+			} else {
+				let startRow = Math.min(fromRow, toRow)
+				let endRow = Math.max(fromRow, toRow)
+				for (let row = startRow + 1; row < endRow; row++) {
+					console.log(row)
+					if (board[row][toCol].piece) {
+						console.log("Blocked by piece:", board[toCol][row])
+						return false
+					}
+				}
+			}
+			return true
+		}
+
+		/////////////// Bishop //////////////////////
+		const rowDirection = toRow > fromRow ? 1 : -1
+		const colDirection = toCol > fromCol ? 1 : -1
+
+		let currentRow = fromRow + rowDirection
+		let currentCol = fromCol + colDirection
+
+		// Diagonal
+		while (currentRow !== toRow && currentCol !== toCol) {
+			if (board[currentRow][currentCol].piece) {
+				console.log("Blocked by piece:", board[currentRow][currentCol])
+				return false
+			}
+			currentRow += rowDirection
+			currentCol += colDirection
+		}
+
+		return true
+	}
 	const movePiece = (color, fromRow, fromCol, toRow, toCol) => {
 		const newBoard = board.map((row) => row.map((square) => ({ ...square }))) // Clone the board
 
