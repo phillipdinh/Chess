@@ -11,6 +11,7 @@
 }
 
 .board-square {
+	position: relative;
 	width: 40px;
 	height: 40px;
 	display: flex;
@@ -25,7 +26,22 @@
 .board-square.dark {
 	background-color: #b58863;
 }
+.board-label {
+	position: absolute; /* Allow precise positioning */
+	font-size: 10px; /* Make the labels smaller */
+	color: #333; /* Change text color as needed */
+	pointer-events: none; /* Make sure the labels do not interfere with clicks */
+}
 
+.row-label {
+	top: 2px; /* Position in the top left corner */
+	left: 2px; /* Position in the top left corner */
+}
+
+.col-label {
+	bottom: 2px; /* Position in the bottom right corner */
+	right: 2px; /* Position in the bottom right corner */
+}
 .white {
 	color: white;
 }
