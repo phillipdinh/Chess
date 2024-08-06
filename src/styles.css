@@ -1,8 +1,8 @@
 .board {
 	display: flex;
 	flex-direction: column;
-	width: 320px;
-	height: 320px;
+	width: 640px;
+	height: 640px;
 	border: 2px solid black;
 }
 
@@ -12,8 +12,8 @@
 
 .board-square {
 	position: relative;
-	width: 40px;
-	height: 40px;
+	width: 80px;
+	height: 80px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -27,20 +27,20 @@
 	background-color: #b58863;
 }
 .board-label {
-	position: absolute; /* Allow precise positioning */
-	font-size: 10px; /* Make the labels smaller */
-	color: #333; /* Change text color as needed */
-	pointer-events: none; /* Make sure the labels do not interfere with clicks */
+	position: absolute;
+	font-size: 10px;
+	color: #333;
+	pointer-events: none;
 }
 
 .row-label {
-	top: 2px; /* Position in the top left corner */
-	left: 2px; /* Position in the top left corner */
+	top: 2px;
+	left: 2px;
 }
 
 .col-label {
-	bottom: 2px; /* Position in the bottom right corner */
-	right: 2px; /* Position in the bottom right corner */
+	bottom: 2px;
+	right: 2px;
 }
 .white {
 	color: white;
