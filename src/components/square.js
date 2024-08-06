@@ -26,7 +26,8 @@ export default function Square(props) {
 				return null // No piece
 		}
 	}
-
+	const showCol = props.row === 7
+	const showRow = props.col === 0
 	return (
 		<div
 			id={id}
@@ -35,6 +36,12 @@ export default function Square(props) {
 			}`}
 			onClick={props.onClick}
 		>
+			{showRow ? (
+				<span className="board-label row-label">{`${props.row}`}</span>
+			) : null}
+			{showCol ? (
+				<span className="board-label col-label">{`${props.col}`}</span>
+			) : null}
 			{renderPiece(props.piece, props.color, props.onClick)}
 		</div>
 	)
