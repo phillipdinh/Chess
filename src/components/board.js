@@ -8,6 +8,7 @@ import "../styles.css"
 export default function Board() {
 	/* TODO 
     - Highlight possible squares and captures
+    - Look for "check" after every move
     */
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -56,6 +57,9 @@ export default function Board() {
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 	}
 	const validateMove = (fromRow, fromCol, toRow, toCol) => {
+		console.log("From    : ", fromRow, fromCol)
+		console.log("To (R,C): ", toRow, toCol)
+
 		switch (board[fromRow][fromCol].piece) {
 			case "p":
 				return validatePawnMove(fromRow, fromCol, toRow, toCol)
@@ -74,10 +78,14 @@ export default function Board() {
 		}
 	}
 	const validateOrthogonalMove = (fromRow, fromCol, toRow, toCol) => {
-		if ((fromRow !== toRow && fromCol !== toCol) || board[toRow][toCol].piece) {
+		//TODO add capture tally
+		const fromSquare = board[fromRow][fromCol]
+		const toSquare = board[toRow][toCol]
+		if ((fromRow !== toRow && fromCol !== toCol) || fromSquare.color === toSquare.color) {
 			console.log("Bad")
 			return false
 		}
+
 		if (fromRow === toRow) {
 			let startCol = Math.min(fromCol, toCol)
 			let endCol = Math.max(fromCol, toCol)
@@ -102,7 +110,14 @@ export default function Board() {
 		return true
 	}
 	const validateDiagonalMove = (fromRow, fromCol, toRow, toCol) => {
-		if (Math.abs(fromRow - toRow) != Math.abs(fromCol - toCol)) {
+		//TODO add capture tally
+		const fromSquare = board[fromRow][fromCol]
+		const toSquare = board[toRow][toCol]
+
+		if (
+			Math.abs(fromRow - toRow) !== Math.abs(fromCol - toCol) ||
+			fromSquare.color === toSquare.color
+		) {
 			console.log("Bad")
 			return false
 		}
@@ -112,7 +127,6 @@ export default function Board() {
 		let currentRow = fromRow + rowDirection
 		let currentCol = fromCol + colDirection
 
-		// Diagonal
 		while (currentRow !== toRow && currentCol !== toCol) {
 			if (board[currentRow][currentCol].piece) {
 				console.log("Blocked by piece:", board[currentRow][currentCol])
@@ -124,126 +138,72 @@ export default function Board() {
 		return true
 	}
 	const validatePawnMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: Add starting check (double), capture, promotion
-		const direction = board[fromRow][fromCol].color === "white" ? -1 : 1 // White moves up (-1), Black moves down (+1)
-		console.log("From    : ", fromRow, fromCol)
-		console.log("To (R,C): ", toRow, toCol)
+		//TODO: Add starting check (double), promotion, enpassant
+		// White moves up (-1), Black moves down (+1)
+		const toColor = board[toRow][toCol].color
+		const fromColor = board[fromRow][fromCol].color
+		const direction = fromColor === "white" ? -1 : 1
 
-		// Check Normal move
-		if (
-			toRow === fromRow + direction &&
-			toCol === fromCol &&
-			!board[toRow][toCol].piece
-		) {
+		//prettier-ignore
+		const isDiagonalMove = Math.abs(fromCol - toCol) === 1 && toRow === fromRow + direction
+		const isForwardMove = toRow === fromRow + direction && toCol === fromCol
+
+		// Check capture (diagonal move)
+		if (isDiagonalMove && toColor && fromColor !== toColor) {
+			// TODO: Add capture tally
 			return true
-		} else {
-			console.log("Bad")
-			return false
 		}
+
+		if (isForwardMove && toColor == null) {
+			return true
+		}
+
+		console.log("Bad Move")
+		return false
 	}
 	const validateRookMove = (fromRow, fromCol, toRow, toCol) => {
 		//TODO: capture, check if piece in between
-		console.log("From: ", fromRow, fromCol)
-		console.log("To: ", toRow, toCol)
-
 		return validateOrthogonalMove(fromRow, fromCol, toRow, toCol)
 	}
 
 	const validateBishopMove = (fromRow, fromCol, toRow, toCol) => {
 		//TODO: capture
-		console.log("From: ", fromRow, fromCol)
-		console.log("To: ", toRow, toCol)
-
 		return validateDiagonalMove(fromRow, fromCol, toRow, toCol)
 	}
 	const validateKnightMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: capture
-		console.log("From: ", fromRow, fromCol)
-		console.log("To: ", toRow, toCol)
+		//TODO: capture tally
+		const fromSquare = board[fromRow][fromCol]
+		const toSquare = board[toRow][toCol]
 
 		const rowDiff = Math.abs(fromRow - toRow)
 		const colDiff = Math.abs(fromCol - toCol)
 
-		// L Shape
 		if (
-			((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2)) &&
-			!board[toRow][toCol].piece
+			fromSquare.color !== toSquare.color &&
+			((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2))
 		) {
 			return true
-		} else {
-			console.log("Bad")
-			return false
 		}
+		console.log("Bad")
+		return false
 	}
 	const validateQueenMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: capture, Push bishop and rook checks in functions
-		console.log("From: ", fromRow, fromCol)
-		console.log("To: ", toRow, toCol)
-
-		///////////////// Rook ///////////////////////
-
+		//TODO: capture
 		return (
 			validateOrthogonalMove(fromRow, fromCol, toRow, toCol) ||
 			validateDiagonalMove(fromRow, fromCol, toRow, toCol)
 		)
-		// if ((fromRow === toRow || fromCol === toCol) && !board[toRow][toCol].piece) {
-		// 	if (fromRow === toRow) {
-		// 		let startCol = Math.min(fromCol, toCol)
-		// 		let endCol = Math.max(fromCol, toCol)
-		// 		for (let col = startCol + 1; col <= endCol - 1; col++) {
-		// 			if (board[toRow][col].piece) {
-		// 				console.log("Blocked by piece:", board[col][toRow])
-		// 				console.log()
-		// 				return false
-		// 			}
-		// 		}
-		// 	} else {
-		// 		let startRow = Math.min(fromRow, toRow)
-		// 		let endRow = Math.max(fromRow, toRow)
-		// 		for (let row = startRow + 1; row < endRow; row++) {
-		// 			console.log(row)
-		// 			if (board[row][toCol].piece) {
-		// 				console.log("Blocked by piece:", board[toCol][row])
-		// 				return false
-		// 			}
-		// 		}
-		// 	}
-		// 	return true
-		// }
-
-		/////////////// Bishop //////////////////////
-		// const rowDirection = toRow > fromRow ? 1 : -1
-		// const colDirection = toCol > fromCol ? 1 : -1
-
-		// let currentRow = fromRow + rowDirection
-		// let currentCol = fromCol + colDirection
-
-		// // Diagonal
-		// while (currentRow !== toRow && currentCol !== toCol) {
-		// 	if (board[currentRow][currentCol].piece) {
-		// 		console.log("Blocked by piece:", board[currentRow][currentCol])
-		// 		return false
-		// 	}
-		// 	currentRow += rowDirection
-		// 	currentCol += colDirection
-		// }
-
-		// return true
 	}
 	const validateKingMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO:
-		console.log("From    : ", fromRow, fromCol)
-		console.log("To (R,C): ", toRow, toCol)
-
+		//TODO: Check, checkmate, draw, can't put self in check, capture tally
 		if (
-			Math.max(Math.abs(fromRow - toRow), Math.abs(fromCol - toCol)) <= 1 &&
-			!board[toRow][toCol].piece
+			Math.max(Math.abs(fromRow - toRow), Math.abs(fromCol - toCol)) > 1 ||
+			board[fromRow][fromCol].color === board[toRow][toCol].color
 		) {
-			return true
-		} else {
 			console.log("Blocked by piece:", board[toRow][toCol])
 			return false
 		}
+		return true
 	}
 
 	return (
