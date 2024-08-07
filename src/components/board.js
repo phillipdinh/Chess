@@ -22,8 +22,8 @@ export default function Board() {
 	const [isBadMove, setIsBadMove] = useState(false)
 	const [promotionSquare, setPromotionSquare] = useState(null)
 
-	const [whiteKing, setWhiteKing] = useState({ check: false, row: 0, col: 4 })
-	const [blackKing, setBlackKing] = useState({ check: false, row: 7, col: 4 })
+	const [whiteKing, setWhiteKing] = useState({ row: 7, col: 4 })
+	const [blackKing, setBlackKing] = useState({ row: 0, col: 4 })
 
 	const setBoardPiece = (row, col, attr, val) => {
 		setBoard((prevBoard) => {
@@ -70,6 +70,31 @@ export default function Board() {
 		setBoardPiece(row, col, "color", color)
 		setPromotionSquare(null)
 	}
+
+	// After King moves out of check. Other color is stuck in check
+	const isKingChecked = (newBoard, color) => {
+		// Look at color of piece moved
+		// Look for king
+		// Check every piece on board and validate it against King
+
+		const king = color === "white" ? whiteKing : blackKing
+		//TODO break after set
+		// Or set to false if not found
+		// FIXME: Check is checking wrong king
+		for (let row of newBoard) {
+			for (let square of row) {
+				if (!square.color || square.color === color) {
+					continue
+				}
+				console.log(king)
+				if (validateMove(square.row, square.col, king.row, king.col)) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
 	const movePiece = (fromRow, fromCol, toRow, toCol) => {
 		const toSquare = board[toRow][toCol]
 		const fromSquare = board[fromRow][fromCol]
@@ -155,14 +180,15 @@ export default function Board() {
 	const validateDiagonalMove = (fromRow, fromCol, toRow, toCol) => {
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
-		// console.log(fromSquare)
-		// console.log(toSquare)
+		console.log(fromSquare)
+		console.log(toSquare)
 		if (
 			Math.abs(fromRow - toRow) !== Math.abs(fromCol - toCol) ||
 			fromSquare.color === toSquare.color
 		) {
 			return false
 		}
+		console.log("hello")
 		const rowDirection = toRow > fromRow ? 1 : -1
 		const colDirection = toCol > fromCol ? 1 : -1
 
@@ -269,50 +295,6 @@ export default function Board() {
 			}))
 		}
 		return true
-	}
-
-	// After King moves out of check. Other color is stuck in check
-	const isKingChecked = (color) => {
-		// Look at color of piece moved
-		// Look for king
-		// Check every piece on board and validate it against King
-
-		const king = color === "white" ? whiteKing : blackKing
-		//TODO break after set
-		// Or set to false if not found
-		// FIXME: Check is checking wrong king
-		for (let row of board) {
-			for (let square of row) {
-				if (!square.color || square.color === color) {
-					continue
-				}
-				if (validateMove(square.row, square.col, king.row, king.col)) {
-					return true
-				}
-			}
-			//console.log(square)
-			// console.log(king)
-
-			// if (validateMove(square.row, square.col, king.row, king.col)) {
-			// 	console.log(square)
-			// 	console.log(king)
-			// 	console.log("CHECK")
-			// 	if (color === "white") {
-			// 		console.log("yes")
-			// 		setWhiteKing((prevState) => ({
-			// 			...prevState,
-			// 			check: true
-			// 		}))
-			// 	} else {
-			// 		setBlackKing((prevState) => ({
-			// 			...prevState,
-			// 			check: true
-			// 		}))
-			// 	}
-			// 	return true
-			//}
-		}
-		return false
 	}
 	const pawnPromotion = (square) => {
 		if (square.piece !== "p") return
