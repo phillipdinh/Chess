@@ -12,6 +12,7 @@ export default function Board() {
     - Look for "check" after every move
     - Remove bad move
     - Add game over banner
+    - Clean up states
     */
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -21,8 +22,8 @@ export default function Board() {
 	const [isBadMove, setIsBadMove] = useState(false)
 	const [promotionSquare, setPromotionSquare] = useState(null)
 
-	const whiteKing = useRef({ row: 0, col: 4 })
-	const blackKing = useRef({ row: 7, col: 4 })
+	const [whiteKing, setWhiteKing] = useState({ check: false, row: 0, col: 4 })
+	const [blackKing, setBlackKing] = useState({ check: false, row: 7, col: 4 })
 
 	const setBoardPiece = (row, col, attr, val) => {
 		setBoard((prevBoard) => {
@@ -56,7 +57,6 @@ export default function Board() {
 			(clickedSquare.color === "black" && !isWhiteTurn)
 		) {
 			setSelectedPiece(clickedSquare)
-			console.log("test")
 			setBoardPiece(row, col, "selected", true)
 		}
 	}
@@ -81,13 +81,6 @@ export default function Board() {
 			return false
 		}
 
-		if (
-			(isWhiteTurn && toSquare.color === "black") ||
-			(!isWhiteTurn && toSquare.color === "white")
-		) {
-			capturePiece(toSquare)
-		}
-
 		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
 		const newBoardFrom = newBoard[fromRow][fromCol]
 		const newBoardTo = newBoard[toRow][toCol]
@@ -100,22 +93,22 @@ export default function Board() {
 
 		newBoardFrom.selected = false
 
+		if (isKingChecked(newBoard, fromSquare.color)) {
+			return false
+		}
+		if (
+			(isWhiteTurn && toSquare.color === "black") ||
+			(!isWhiteTurn && toSquare.color === "white")
+		) {
+			capturePiece(toSquare)
+		}
 		setBoard(newBoard)
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 		pawnPromotion(newBoardTo)
 	}
-	const pawnPromotion = (square) => {
-		console.log(square)
-		if (square.piece !== "p") return
-
-		if (square.color === "black" && square.row !== 7) return
-
-		if (square.color === "white" && square.row !== 0) return
-		setPromotionSquare(square)
-	}
 	const validateMove = (fromRow, fromCol, toRow, toCol) => {
-		console.log("From    : ", fromRow, fromCol)
-		console.log("To (R,C): ", toRow, toCol)
+		//console.log("From    : ", fromRow, fromCol)
+		// console.log("To (R,C): ", toRow, toCol)
 		setBoardPiece(fromRow, fromCol, "selected", false)
 		switch (board[fromRow][fromCol].piece) {
 			case "p":
@@ -162,7 +155,8 @@ export default function Board() {
 	const validateDiagonalMove = (fromRow, fromCol, toRow, toCol) => {
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
-
+		// console.log(fromSquare)
+		// console.log(toSquare)
 		if (
 			Math.abs(fromRow - toRow) !== Math.abs(fromCol - toCol) ||
 			fromSquare.color === toSquare.color
@@ -182,6 +176,7 @@ export default function Board() {
 			currentRow += rowDirection
 			currentCol += colDirection
 		}
+		console.log("valid")
 		return true
 	}
 	const validatePawnMove = (fromRow, fromCol, toRow, toCol) => {
@@ -251,33 +246,81 @@ export default function Board() {
         - Ppdate king square
         - Castle
         */
+
+		const fromSquare = board[fromRow][fromCol]
 		if (
 			Math.max(Math.abs(fromRow - toRow), Math.abs(fromCol - toCol)) > 1 ||
 			board[fromRow][fromCol].color === board[toRow][toCol].color
 		) {
-			console.log("Blocked by piece:", board[toRow][toCol])
+			//console.log("Blocked by piece:", board[toRow][toCol])
 			return false
+		}
+		if (fromSquare.color === "white") {
+			setWhiteKing((prevState) => ({
+				...prevState,
+				row: toRow,
+				col: toCol
+			}))
+		} else {
+			setBlackKing((prevState) => ({
+				...prevState,
+				row: toRow,
+				col: toCol
+			}))
 		}
 		return true
 	}
 
-	const KingStatus = (fromRow, fromCol) => {
+	// After King moves out of check. Other color is stuck in check
+	const isKingChecked = (color) => {
 		// Look at color of piece moved
 		// Look for king
 		// Check every piece on board and validate it against King
 
-		const fromColor = board[fromRow][fromCol].color
-		const king = fromColor === "white" ? whiteKing : blackKing
-		board.forEach((row) => {
-			row.forEach((square) => {
-				// if (square.color !== fromColor) {
-				//     continue
+		const king = color === "white" ? whiteKing : blackKing
+		//TODO break after set
+		// Or set to false if not found
+		// FIXME: Check is checking wrong king
+		for (let row of board) {
+			for (let square of row) {
+				if (!square.color || square.color === color) {
+					continue
+				}
+				if (validateMove(square.row, square.col, king.row, king.col)) {
+					return true
+				}
+			}
+			//console.log(square)
+			// console.log(king)
 
-				// }
-				// If valid then it is in check
-				validateMove(square.row, square.col, king.row, king.col)
-			})
-		})
+			// if (validateMove(square.row, square.col, king.row, king.col)) {
+			// 	console.log(square)
+			// 	console.log(king)
+			// 	console.log("CHECK")
+			// 	if (color === "white") {
+			// 		console.log("yes")
+			// 		setWhiteKing((prevState) => ({
+			// 			...prevState,
+			// 			check: true
+			// 		}))
+			// 	} else {
+			// 		setBlackKing((prevState) => ({
+			// 			...prevState,
+			// 			check: true
+			// 		}))
+			// 	}
+			// 	return true
+			//}
+		}
+		return false
+	}
+	const pawnPromotion = (square) => {
+		if (square.piece !== "p") return
+
+		if (square.color === "black" && square.row !== 7) return
+
+		if (square.color === "white" && square.row !== 0) return
+		setPromotionSquare(square)
 	}
 	return (
 		<>
