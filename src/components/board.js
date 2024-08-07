@@ -9,8 +9,10 @@ import "../styles.css"
 export default function Board() {
 	/* TODO 
     - Highlight possible squares and captures
+    - Highlight selected
     - Look for "check" after every move
     - Remove bad move
+    - Add game over banner
     */
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -23,6 +25,16 @@ export default function Board() {
 	const whiteKing = useRef({ row: 0, col: 4 })
 	const blackKing = useRef({ row: 7, col: 4 })
 
+	const setBoardPiece = (row, col, piece, color) => {
+		setBoard((prevBoard) => {
+			const newBoard = prevBoard.map((r) => r.map((square) => ({ ...square })))
+
+			newBoard[row][col].piece = piece
+			newBoard[row][col].color = color
+
+			return newBoard
+		})
+	}
 	const capturePiece = (piece) => {
 		if (piece.color === "black") {
 			setWhiteTally((prevTally) => [...prevTally, piece])
@@ -34,6 +46,7 @@ export default function Board() {
 		const clickedSquare = board[row][col]
 
 		if (selectedPiece) {
+			selectedPiece.selected = true
 			const { row: selectedRow, col: selectedCol } = selectedPiece
 			const isValidMove = validateMove(selectedRow, selectedCol, row, col)
 
@@ -50,19 +63,18 @@ export default function Board() {
 			setSelectedPiece(clickedSquare)
 		}
 	}
-	const handlePromotionClick = (row, col, piece) => {
-		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
-		newBoard[row][col].piece = piece
-		setBoard(newBoard)
+	const handlePromotionClick = (row, col, piece, color) => {
+		setBoardPiece(row, col, piece, color)
 		setPromotionSquare(null)
 	}
 	const movePiece = (fromRow, fromCol, toRow, toCol) => {
-		const fromColor = board[fromRow][fromCol].color
 		const toSquare = board[toRow][toCol]
-		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
+		const fromSquare = board[fromRow][fromCol]
 
-		//TODO retry until valid
-		if ((isWhiteTurn && fromColor === "black") || (!isWhiteTurn && fromColor === "white")) {
+		if (
+			(isWhiteTurn && fromSquare.color === "black") ||
+			(!isWhiteTurn && fromSquare.color === "white")
+		) {
 			setSelectedPiece(null)
 			console.log("Not your piece")
 			return false
@@ -75,18 +87,12 @@ export default function Board() {
 			capturePiece(toSquare)
 		}
 
-		const newBoardFrom = newBoard[fromRow][fromCol]
-		const newBoardTo = newBoard[toRow][toCol]
+		setBoardPiece(toRow, toCol, fromSquare.piece, fromSquare.color)
+		setBoardPiece(fromRow, fromCol, null, null)
 
-		newBoardTo.piece = newBoard[fromRow][fromCol].piece
-		newBoardTo.color = fromColor
-		newBoardFrom.piece = null
-		newBoardFrom.color = null
-
-		setBoard(newBoard)
 		setSelectedPiece(null)
 		setIsWhiteTurn((prevTurn) => !prevTurn)
-		pawnPromotion(newBoardTo)
+		pawnPromotion(board[toRow][toCol])
 	}
 	const pawnPromotion = (square) => {
 		if (square.piece !== "p") return
@@ -232,9 +238,9 @@ export default function Board() {
         TODO
         - Check
         - checkmate
-        - draw
-        - can't put self in check
-        - update king square
+        - Draw
+        - Can't put self in check
+        - Ppdate king square
         - Castle
         */
 		if (
@@ -277,6 +283,7 @@ export default function Board() {
 								col={colIndex}
 								piece={square.piece}
 								color={square.color}
+								selected={square.selected}
 								onClick={() => handleSquareClick(rowIndex, colIndex)}
 							/>
 						))}
@@ -292,8 +299,7 @@ export default function Board() {
 
 			{promotionSquare != null ? (
 				<PromotionChoices
-					row={promotionSquare.row}
-					col={promotionSquare.col}
+					square={promotionSquare}
 					onClick={handlePromotionClick}
 				></PromotionChoices>
 			) : null}
@@ -324,7 +330,13 @@ const boardInit = () => {
 			} else {
 				player = null
 			}
-			currRow.push({ row: r, col: c, piece: newBoardSetup[r][c], color: player })
+			currRow.push({
+				row: r,
+				col: c,
+				piece: newBoardSetup[r][c],
+				color: player,
+				selected: false
+			})
 			/*
             Square:
             -row
