@@ -26,7 +26,9 @@ export default function Square(props) {
 	return (
 		<div
 			id={id}
-			className={`board-square ${(props.row + props.col) % 2 === 0 ? "light" : "dark"}`}
+			className={`board-square ${
+				props.selected ? "selected" : (props.row + props.col) % 2 === 0 ? "light" : "dark"
+			}`}
 			onClick={props.onClick}
 		>
 			{showRow ? <span className="board-label row-label">{`${props.row}`}</span> : null}
