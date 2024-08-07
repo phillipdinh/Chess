@@ -9,7 +9,6 @@ import "../styles.css"
 export default function Board() {
 	/* TODO 
     - Highlight possible squares and captures
-    - Highlight selected
     - Look for "check" after every move
     - Remove bad move
     - Add game over banner
@@ -43,7 +42,6 @@ export default function Board() {
 		const clickedSquare = board[row][col]
 
 		if (selectedPiece) {
-			selectedPiece.selected = true
 			const { row: selectedRow, col: selectedCol } = selectedPiece
 			const isValidMove = validateMove(selectedRow, selectedCol, row, col)
 
@@ -51,13 +49,15 @@ export default function Board() {
 				movePiece(selectedRow, selectedCol, row, col)
 			} else {
 				setIsBadMove(true)
-				setSelectedPiece(null)
 			}
+			setSelectedPiece(null)
 		} else if (
 			(clickedSquare.color === "white" && isWhiteTurn) ||
 			(clickedSquare.color === "black" && !isWhiteTurn)
 		) {
 			setSelectedPiece(clickedSquare)
+			console.log("test")
+			setBoardPiece(row, col, "selected", true)
 		}
 	}
 	const handlePromotionClick = (row, col, piece, color) => {
@@ -94,11 +94,13 @@ export default function Board() {
 
 		newBoardTo.piece = newBoard[fromRow][fromCol].piece
 		newBoardTo.color = fromSquare.color
+
 		newBoardFrom.piece = null
 		newBoardFrom.color = null
 
+		newBoardFrom.selected = false
+
 		setBoard(newBoard)
-		setSelectedPiece(null)
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 		pawnPromotion(newBoardTo)
 	}
@@ -114,7 +116,7 @@ export default function Board() {
 	const validateMove = (fromRow, fromCol, toRow, toCol) => {
 		console.log("From    : ", fromRow, fromCol)
 		console.log("To (R,C): ", toRow, toCol)
-
+		setBoardPiece(fromRow, fromCol, "selected", false)
 		switch (board[fromRow][fromCol].piece) {
 			case "p":
 				return validatePawnMove(fromRow, fromCol, toRow, toCol)
