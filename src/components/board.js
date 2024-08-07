@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react"
 
 import Square from "./square"
 import GameInfo from "./gameInfo"
+import PromotionChoices from "./promotionChoices"
 
 import "../styles.css"
 
@@ -9,51 +10,92 @@ export default function Board() {
 	/* TODO 
     - Highlight possible squares and captures
     - Look for "check" after every move
+    - Remove bad move
     */
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
 	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
+	const [whiteTally, setWhiteTally] = useState([])
+	const [blackTally, setBlackTally] = useState([])
+	const [isBadMove, setIsBadMove] = useState(false)
+	const [promotionSquare, setPromotionSquare] = useState(null)
+
 	const whiteKing = useRef({ row: 0, col: 4 })
 	const blackKing = useRef({ row: 7, col: 4 })
 
+	const capturePiece = (piece) => {
+		if (piece.color === "black") {
+			setWhiteTally((prevTally) => [...prevTally, piece])
+		} else {
+			setBlackTally((prevTally) => [...prevTally, piece])
+		}
+	}
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = board[row][col]
 
 		if (selectedPiece) {
 			const { row: selectedRow, col: selectedCol } = selectedPiece
-
 			const isValidMove = validateMove(selectedRow, selectedCol, row, col)
 
 			if (isValidMove) {
 				movePiece(selectedRow, selectedCol, row, col)
 			} else {
-				//TODO Bad move warning pop up
+				setIsBadMove(true)
 				setSelectedPiece(null)
 			}
-		} else if (clickedSquare.piece) {
+		} else if (
+			(clickedSquare.color === "white" && isWhiteTurn) ||
+			(clickedSquare.color === "black" && !isWhiteTurn)
+		) {
 			setSelectedPiece(clickedSquare)
 		}
 	}
+	const handlePromotionClick = (row, col, piece) => {
+		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
+		newBoard[row][col].piece = piece
+		setBoard(newBoard)
+		setPromotionSquare(null)
+	}
 	const movePiece = (fromRow, fromCol, toRow, toCol) => {
-		const newBoard = board.map((row) => row.map((square) => ({ ...square }))) // Clone the board
+		const fromColor = board[fromRow][fromCol].color
+		const toSquare = board[toRow][toCol]
+		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
 
-		if (
-			(isWhiteTurn && board[fromRow][fromCol].color === "black") ||
-			(!isWhiteTurn && board[fromRow][fromCol].color === "white")
-		) {
+		//TODO retry until valid
+		if ((isWhiteTurn && fromColor === "black") || (!isWhiteTurn && fromColor === "white")) {
 			setSelectedPiece(null)
 			console.log("Not your piece")
 			return false
 		}
 
-		newBoard[toRow][toCol].piece = newBoard[fromRow][fromCol].piece
-		newBoard[toRow][toCol].color = board[fromRow][fromCol].color
-		newBoard[fromRow][fromCol].piece = null
-		newBoard[fromRow][fromCol].color = null
+		if (
+			(isWhiteTurn && toSquare.color === "black") ||
+			(!isWhiteTurn && toSquare.color === "white")
+		) {
+			capturePiece(toSquare)
+		}
+
+		const newBoardFrom = newBoard[fromRow][fromCol]
+		const newBoardTo = newBoard[toRow][toCol]
+
+		newBoardTo.piece = newBoard[fromRow][fromCol].piece
+		newBoardTo.color = fromColor
+		newBoardFrom.piece = null
+		newBoardFrom.color = null
 
 		setBoard(newBoard)
 		setSelectedPiece(null)
 		setIsWhiteTurn((prevTurn) => !prevTurn)
+		pawnPromotion(newBoardTo)
+	}
+	const pawnPromotion = (square) => {
+		if (square.piece !== "p") return
+
+		if (square.color === "black" && square.row !== 7) return
+
+		if (square.color === "white" && square.row !== 0) return
+
+		setPromotionSquare(square)
 	}
 	const validateMove = (fromRow, fromCol, toRow, toCol) => {
 		console.log("From    : ", fromRow, fromCol)
@@ -77,7 +119,6 @@ export default function Board() {
 		}
 	}
 	const validateOrthogonalMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO add capture tally
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
 		if ((fromRow !== toRow && fromCol !== toCol) || fromSquare.color === toSquare.color) {
@@ -89,8 +130,6 @@ export default function Board() {
 			let endCol = Math.max(fromCol, toCol)
 			for (let col = startCol + 1; col <= endCol - 1; col++) {
 				if (board[toRow][col].piece) {
-					console.log("Blocked by piece:", board[col][toRow])
-					console.log()
 					return false
 				}
 			}
@@ -100,7 +139,6 @@ export default function Board() {
 			for (let row = startRow + 1; row < endRow; row++) {
 				console.log(row)
 				if (board[row][toCol].piece) {
-					console.log("Blocked by piece:", board[toCol][row])
 					return false
 				}
 			}
@@ -108,7 +146,6 @@ export default function Board() {
 		return true
 	}
 	const validateDiagonalMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO capture tally
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
 
@@ -116,7 +153,6 @@ export default function Board() {
 			Math.abs(fromRow - toRow) !== Math.abs(fromCol - toCol) ||
 			fromSquare.color === toSquare.color
 		) {
-			console.log("Bad")
 			return false
 		}
 		const rowDirection = toRow > fromRow ? 1 : -1
@@ -127,7 +163,6 @@ export default function Board() {
 
 		while (currentRow !== toRow && currentCol !== toCol) {
 			if (board[currentRow][currentCol].piece) {
-				console.log("Blocked by piece:", board[currentRow][currentCol])
 				return false
 			}
 			currentRow += rowDirection
@@ -136,7 +171,7 @@ export default function Board() {
 		return true
 	}
 	const validatePawnMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: Add starting check (double), promotion, enpassant
+		//TODO: enpassant
 
 		const toColor = board[toRow][toCol].color
 		const fromColor = board[fromRow][fromCol].color
@@ -163,19 +198,15 @@ export default function Board() {
 		if (isDoubleMove && board[toRow - direction][toCol].color == null) {
 			return true
 		}
-		console.log("Bad Move")
 		return false
 	}
 	const validateRookMove = (fromRow, fromCol, toRow, toCol) => {
 		return validateOrthogonalMove(fromRow, fromCol, toRow, toCol)
 	}
-
 	const validateBishopMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: capture tally
 		return validateDiagonalMove(fromRow, fromCol, toRow, toCol)
 	}
 	const validateKnightMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: capture tally
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
 
@@ -188,11 +219,9 @@ export default function Board() {
 		) {
 			return true
 		}
-		console.log("Bad")
 		return false
 	}
 	const validateQueenMove = (fromRow, fromCol, toRow, toCol) => {
-		//TODO: capture tally
 		return (
 			validateOrthogonalMove(fromRow, fromCol, toRow, toCol) ||
 			validateDiagonalMove(fromRow, fromCol, toRow, toCol)
@@ -205,8 +234,8 @@ export default function Board() {
         - checkmate
         - draw
         - can't put self in check
-        - capture tally
         - update king square
+        - Castle
         */
 		if (
 			Math.max(Math.abs(fromRow - toRow), Math.abs(fromCol - toCol)) > 1 ||
@@ -236,7 +265,6 @@ export default function Board() {
 			})
 		})
 	}
-
 	return (
 		<>
 			<div className="board">
@@ -255,7 +283,20 @@ export default function Board() {
 					</div>
 				))}
 			</div>
-			<GameInfo turn={isWhiteTurn} />
+			<GameInfo
+				turn={isWhiteTurn}
+				whiteTally={whiteTally}
+				blackTally={blackTally}
+				badMove={isBadMove}
+			/>
+
+			{promotionSquare != null ? (
+				<PromotionChoices
+					row={promotionSquare.row}
+					col={promotionSquare.col}
+					onClick={handlePromotionClick}
+				></PromotionChoices>
+			) : null}
 		</>
 	)
 }
@@ -284,6 +325,14 @@ const boardInit = () => {
 				player = null
 			}
 			currRow.push({ row: r, col: c, piece: newBoardSetup[r][c], color: player })
+			/*
+            Square:
+            -row
+            -col
+            -piece
+            -color
+            )
+            */
 		}
 		board.push(currRow)
 	}
