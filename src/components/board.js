@@ -25,16 +25,6 @@ export default function Board() {
 	const whiteKing = useRef({ row: 0, col: 4 })
 	const blackKing = useRef({ row: 7, col: 4 })
 
-	const setBoardPiece = (row, col, piece, color) => {
-		setBoard((prevBoard) => {
-			const newBoard = prevBoard.map((r) => r.map((square) => ({ ...square })))
-
-			newBoard[row][col].piece = piece
-			newBoard[row][col].color = color
-
-			return newBoard
-		})
-	}
 	const capturePiece = (piece) => {
 		if (piece.color === "black") {
 			setWhiteTally((prevTally) => [...prevTally, piece])
@@ -64,7 +54,10 @@ export default function Board() {
 		}
 	}
 	const handlePromotionClick = (row, col, piece, color) => {
-		setBoardPiece(row, col, piece, color)
+		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
+		newBoard[row][col].piece = piece
+		newBoard[row][col].color = color
+		setBoard(newBoard)
 		setPromotionSquare(null)
 	}
 	const movePiece = (fromRow, fromCol, toRow, toCol) => {
@@ -75,8 +68,6 @@ export default function Board() {
 			(isWhiteTurn && fromSquare.color === "black") ||
 			(!isWhiteTurn && fromSquare.color === "white")
 		) {
-			setSelectedPiece(null)
-			console.log("Not your piece")
 			return false
 		}
 
@@ -87,20 +78,27 @@ export default function Board() {
 			capturePiece(toSquare)
 		}
 
-		setBoardPiece(toRow, toCol, fromSquare.piece, fromSquare.color)
-		setBoardPiece(fromRow, fromCol, null, null)
+		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
+		const newBoardFrom = newBoard[fromRow][fromCol]
+		const newBoardTo = newBoard[toRow][toCol]
 
+		newBoardTo.piece = newBoard[fromRow][fromCol].piece
+		newBoardTo.color = fromSquare.color
+		newBoardFrom.piece = null
+		newBoardFrom.color = null
+
+		setBoard(newBoard)
 		setSelectedPiece(null)
 		setIsWhiteTurn((prevTurn) => !prevTurn)
-		pawnPromotion(board[toRow][toCol])
+		pawnPromotion(newBoardTo)
 	}
 	const pawnPromotion = (square) => {
+		console.log(square)
 		if (square.piece !== "p") return
 
 		if (square.color === "black" && square.row !== 7) return
 
 		if (square.color === "white" && square.row !== 0) return
-
 		setPromotionSquare(square)
 	}
 	const validateMove = (fromRow, fromCol, toRow, toCol) => {
@@ -128,7 +126,6 @@ export default function Board() {
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
 		if ((fromRow !== toRow && fromCol !== toCol) || fromSquare.color === toSquare.color) {
-			console.log("Bad")
 			return false
 		}
 		if (fromRow === toRow) {
@@ -143,7 +140,6 @@ export default function Board() {
 			let startRow = Math.min(fromRow, toRow)
 			let endRow = Math.max(fromRow, toRow)
 			for (let row = startRow + 1; row < endRow; row++) {
-				console.log(row)
 				if (board[row][toCol].piece) {
 					return false
 				}
