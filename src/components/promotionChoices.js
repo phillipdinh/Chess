@@ -2,12 +2,16 @@ import React, { useState } from "react"
 
 //TODO add css
 export default function PromotionChoices(props) {
+	const handlePromotion = (choice) => {
+		const square = props.square
+		props.onClick(square.row, square.col, choice, square.color)
+	}
 	return (
 		<div className="pawn-promotion">
-			<div onClick={() => props.onClick(props.row, props.col, "q")}>"♕"</div>
-			<div onClick={() => props.onClick(props.row, props.col, "r")}>"♖"</div>
-			<div onClick={() => props.onClick(props.row, props.col, "b")}>"♗"</div>
-			<div onClick={() => props.onClick(props.row, props.col, "n")}>"♞"</div>
+			<div onClick={() => handlePromotion("q")}>♕</div>
+			<div onClick={() => handlePromotion("r")}>♖</div>
+			<div onClick={() => handlePromotion("b")}>♗</div>
+			<div onClick={() => handlePromotion("n")}>♞</div>
 		</div>
 	)
 }
