@@ -25,6 +25,13 @@ export default function Board() {
 	const whiteKing = useRef({ row: 0, col: 4 })
 	const blackKing = useRef({ row: 7, col: 4 })
 
+	const setBoardPiece = (row, col, attr, val) => {
+		setBoard((prevBoard) => {
+			const newBoard = prevBoard.map((r) => r.map((square) => ({ ...square })))
+			newBoard[row][col][attr] = val
+			return newBoard
+		})
+	}
 	const capturePiece = (piece) => {
 		if (piece.color === "black") {
 			setWhiteTally((prevTally) => [...prevTally, piece])
@@ -54,10 +61,13 @@ export default function Board() {
 		}
 	}
 	const handlePromotionClick = (row, col, piece, color) => {
-		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
-		newBoard[row][col].piece = piece
-		newBoard[row][col].color = color
-		setBoard(newBoard)
+		// const newBoard = board.map((row) => row.map((square) => ({ ...square })))
+		// newBoard[row][col].piece = piece
+		// newBoard[row][col].color = color
+		// setBoard(newBoard)
+
+		setBoardPiece(row, col, "piece", piece)
+		setBoardPiece(row, col, "color", color)
 		setPromotionSquare(null)
 	}
 	const movePiece = (fromRow, fromCol, toRow, toCol) => {
