@@ -9,10 +9,10 @@ import "../styles.css"
 export default function Board() {
 	/* TODO 
     - Highlight possible squares and captures
-    - Look for "check" after every move
     - Remove bad move
     - Add game over banner
     - Clean up states
+    - Passboard
     */
 	const [board, setBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -22,8 +22,8 @@ export default function Board() {
 	const [isBadMove, setIsBadMove] = useState(false)
 	const [promotionSquare, setPromotionSquare] = useState(null)
 
-	const [whiteKing, setWhiteKing] = useState({ row: 7, col: 4 })
-	const [blackKing, setBlackKing] = useState({ row: 0, col: 4 })
+	const whiteKing = useRef({ row: 7, col: 4 })
+	const blackKing = useRef({ row: 0, col: 4 })
 
 	const setBoardPiece = (row, col, attr, val) => {
 		setBoard((prevBoard) => {
@@ -71,30 +71,8 @@ export default function Board() {
 		setPromotionSquare(null)
 	}
 
-	// After King moves out of check. Other color is stuck in check
-	const isKingChecked = (newBoard, color) => {
-		// Look at color of piece moved
-		// Look for king
-		// Check every piece on board and validate it against King
-
-		const king = color === "white" ? whiteKing : blackKing
-		//TODO break after set
-		// Or set to false if not found
-		// FIXME: Check is checking wrong king
-		for (let row of newBoard) {
-			for (let square of row) {
-				if (!square.color || square.color === color) {
-					continue
-				}
-				console.log(king)
-				if (validateMove(square.row, square.col, king.row, king.col)) {
-					return true
-				}
-			}
-		}
-		return false
-	}
-
+	//TODO Block check with another piece
+	// Restrict moving piece that is blocking a check
 	const movePiece = (fromRow, fromCol, toRow, toCol) => {
 		const toSquare = board[toRow][toCol]
 		const fromSquare = board[fromRow][fromCol]
@@ -106,31 +84,79 @@ export default function Board() {
 			return false
 		}
 
-		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
-		const newBoardFrom = newBoard[fromRow][fromCol]
-		const newBoardTo = newBoard[toRow][toCol]
+		const oldBoard = board.map((row) => row.map((square) => ({ ...square })))
 
-		newBoardTo.piece = newBoard[fromRow][fromCol].piece
-		newBoardTo.color = fromSquare.color
-
-		newBoardFrom.piece = null
-		newBoardFrom.color = null
-
-		newBoardFrom.selected = false
-
-		if (isKingChecked(newBoard, fromSquare.color)) {
+		const newBoard = oldBoard.map((row) => row.map((square) => ({ ...square })))
+		newBoard[toRow][toCol] = {
+			...newBoard[toRow][toCol],
+			piece: fromSquare.piece,
+			color: fromSquare.color
+		}
+		newBoard[fromRow][fromCol] = {
+			...newBoard[fromRow][fromCol],
+			piece: null,
+			color: null,
+			selected: false
+		}
+		//TODO try to set king before and after check
+		// if (fromSquare.color === "white") {
+		// 	whiteKing.current.row = toRow
+		// 	whiteKing.current.col = toCol
+		// } else {
+		// 	blackKing.current.row = toRow
+		// 	blackKing.current.col = toCol
+		// }
+		//FIXME when king puts self it check board is not set to oldBoard
+		if (isKingChecked(fromSquare.color)) {
+			setBoard(oldBoard)
+			console.log("CHECKED")
+			console.log(board)
 			return false
 		}
+
 		if (
 			(isWhiteTurn && toSquare.color === "black") ||
 			(!isWhiteTurn && toSquare.color === "white")
 		) {
 			capturePiece(toSquare)
 		}
-		setBoard(newBoard)
 		setIsWhiteTurn((prevTurn) => !prevTurn)
-		pawnPromotion(newBoardTo)
+
+		//FIXME put in new board
+		pawnPromotion(board[toRow][toCol])
+		//const newBoard = board.map((row) => row.map((square) => ({ ...square })))
+		// const newBoardFrom = newBoard[fromRow][fromCol]
+		// const newBoardTo = newBoard[toRow][toCol]
+
+		// newBoardTo.piece = newBoard[fromRow][fromCol].piece
+		// newBoardTo.color = fromSquare.color
+
+		// newBoardFrom.piece = null
+		// newBoardFrom.color = null
+
+		//newBoardFrom.selected = false
+
+		setBoard(newBoard)
 	}
+	const isKingChecked = (color) => {
+		// console.log(board)
+		// console.log(color)
+		const king = color === "white" ? whiteKing.current : blackKing.current
+		// console.log(king)
+		for (let row of board) {
+			for (let square of row) {
+				if (!square.color || square.color === color) {
+					continue
+				}
+				if (validateMove(square.row, square.col, king.row, king.col)) {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	// Need validateMove to work with 'newBoard'
 	const validateMove = (fromRow, fromCol, toRow, toCol) => {
 		//console.log("From    : ", fromRow, fromCol)
 		// console.log("To (R,C): ", toRow, toCol)
@@ -149,7 +175,7 @@ export default function Board() {
 			case "k":
 				return validateKingMove(fromRow, fromCol, toRow, toCol)
 			default:
-				return false // Invalid piece
+				return false
 		}
 	}
 	const validateOrthogonalMove = (fromRow, fromCol, toRow, toCol) => {
@@ -180,15 +206,14 @@ export default function Board() {
 	const validateDiagonalMove = (fromRow, fromCol, toRow, toCol) => {
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
-		console.log(fromSquare)
-		console.log(toSquare)
+		// console.log(fromSquare)
+		// console.log(toSquare)
 		if (
 			Math.abs(fromRow - toRow) !== Math.abs(fromCol - toCol) ||
 			fromSquare.color === toSquare.color
 		) {
 			return false
 		}
-		console.log("hello")
 		const rowDirection = toRow > fromRow ? 1 : -1
 		const colDirection = toCol > fromCol ? 1 : -1
 
@@ -265,12 +290,11 @@ export default function Board() {
 	const validateKingMove = (fromRow, fromCol, toRow, toCol) => {
 		/*
         TODO
-        - Check
         - checkmate
         - Draw
-        - Can't put self in check
         - Ppdate king square
         - Castle
+        - Check if move gets rid of check
         */
 
 		const fromSquare = board[fromRow][fromCol]
@@ -278,30 +302,26 @@ export default function Board() {
 			Math.max(Math.abs(fromRow - toRow), Math.abs(fromCol - toCol)) > 1 ||
 			board[fromRow][fromCol].color === board[toRow][toCol].color
 		) {
-			//console.log("Blocked by piece:", board[toRow][toCol])
 			return false
 		}
 		if (fromSquare.color === "white") {
-			setWhiteKing((prevState) => ({
-				...prevState,
-				row: toRow,
-				col: toCol
-			}))
+			whiteKing.current.row = toRow
+			whiteKing.current.col = toCol
 		} else {
-			setBlackKing((prevState) => ({
-				...prevState,
-				row: toRow,
-				col: toCol
-			}))
+			blackKing.current.row = toRow
+			blackKing.current.col = toCol
 		}
 		return true
 	}
+
+    //FIXME color not matching
 	const pawnPromotion = (square) => {
 		if (square.piece !== "p") return
 
 		if (square.color === "black" && square.row !== 7) return
 
 		if (square.color === "white" && square.row !== 0) return
+		console.log("HELLO")
 		setPromotionSquare(square)
 	}
 	return (
