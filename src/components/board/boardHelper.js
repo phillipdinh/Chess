@@ -12,7 +12,7 @@
     */
 
 // TODO seperate into own files by piece
-function copyBoard(board, fromPos, toPos, piece, color) {
+export function copyBoard(board, fromPos, toPos, piece, color) {
 	//TODO seperate into function
 	const newBoard = board.map((r) => r.map((square) => ({ ...square })))
 
@@ -109,32 +109,71 @@ function canPieceBlock(board, kingPos, kingColor) {
 	for (let row of board) {
 		for (let square of row) {
 			if (square.color !== kingColor) continue
-			// console.log(square)
-			if (canBishopBlock(board, square, kingPos)) return true
-			// switch (square.piece) {
-			// 	case "p":
-			// 		return
-			// 	case "r":
-			// 		return
-			// 	case "b":
-			// 		return (canBishopBlock(board, square, kingPos))
-			// 		break
-			// 	case "n":
-			// 		return
-			// 	case "q":
-			// 		return
-			// 	case "k":
-			// 		return
-			// 	default:
-			// 		console.log("default")
-			// 		return false
-			//}
+			console.log(square)
+			//FIXME make sure canBlock functions dont return after checking the first
+			switch (square.piece) {
+				// case "p":
+				// 	return
+				// case "r":
+				// 	return
+				case "b":
+					if (canBishopBlock(board, square, kingPos)) return true
+					break
+				case "n":
+					if (canKnightBlock(board, square, kingPos)) return true
+					break
+				// case "q":
+				// 	return canQueenBlock(board, square, kingPos)
+				default:
+					console.log("default")
+				//return false
+			}
 		}
 	}
 }
 
+// TODO check
+function canKnightBlock(board, fromSquare, kingPos) {
+	const directions = [-2, -1, 1, 2]
+
+	const fromPos = { row: fromSquare.row, col: fromSquare.col }
+	const toPos = { row: fromSquare.row, col: fromSquare.col }
+
+	for (let r of directions) {
+		for (let c of directions) {
+			if ((r === -2 || r === 2) && (c === -2 || c === 2)) continue
+			if ((c === -1 || c === 1) && (r === -1 || r === 1)) continue
+
+			toPos.row = fromSquare.row + r
+			toPos.col = fromSquare.col + c
+			if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) continue
+
+			// TODO make sure to check all moves before return
+			if (validateKnightMove(board, fromPos, toPos)) {
+				const newBoard = copyBoard(
+					board,
+					fromPos,
+					toPos,
+					fromSquare.piece,
+					fromSquare.color
+				)
+
+				if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
+					console.log("Knight block: ", fromPos)
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
 // TODO Double check
 function canBishopBlock(board, fromSquare, kingPos) {
+	return canDiagonalBlock(board, fromSquare, kingPos)
+}
+
+//TODO add orthongonal
+function canQueenBlock(board, fromSquare, kingPos) {
 	return canDiagonalBlock(board, fromSquare, kingPos)
 }
 function canDiagonalBlock(board, fromSquare, kingPos) {
@@ -153,7 +192,6 @@ function canDiagonalBlock(board, fromSquare, kingPos) {
 			while (true) {
 				toPos.row += r
 				toPos.col += c
-				console.log(toPos.row, toPos.col)
 				if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) break
 
 				if (!validateDiagonalMove(board, fromPos, toPos)) break
@@ -163,10 +201,11 @@ function canDiagonalBlock(board, fromSquare, kingPos) {
 					fromPos,
 					toPos,
 					fromSquare.piece,
-					fromSquare.piece
+					fromSquare.color
 				)
 
 				if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
+					console.log("Diagonal block: ", fromPos)
 					return true
 				}
 			}
@@ -299,7 +338,6 @@ function validateBishopMove(board, fromPos, toPos) {
 function validateKnightMove(board, fromPos, toPos) {
 	const fromSquare = board[fromPos.row][fromPos.col]
 	const toSquare = board[toPos.row][toPos.col]
-
 	const rowDiff = Math.abs(fromPos.row - toPos.row)
 	const colDiff = Math.abs(fromPos.col - toPos.col)
 
