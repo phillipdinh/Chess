@@ -12,14 +12,14 @@ export default function Board() {
     - Remove bad move
     - Add game over banner
     - Clean up states
-    - Passboard
+    - Drag
+    - Moves functions out of board
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
 	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
 	const [whiteTally, setWhiteTally] = useState([])
 	const [blackTally, setBlackTally] = useState([])
-	const [isBadMove, setIsBadMove] = useState(false)
 	const [promotionSquare, setPromotionSquare] = useState(null)
 
 	const whiteKing = useRef({ row: 7, col: 4 })
@@ -50,8 +50,6 @@ export default function Board() {
 
 			if (isValidMove) {
 				movePiece(chessBoard, fromPos, toPos)
-			} else {
-				setIsBadMove(true)
 			}
 			setSelectedPiece(null)
 		} else if (
@@ -226,7 +224,7 @@ export default function Board() {
 		const isFirstMove = (fromPos.row === 1 && fromColor === "black") || 
                             (fromPos.row === 6 && fromColor === "white")
 		const isDiagonalMove =
-			Math.abs(fromPos.col - toPos.col) === 1 && toPos.row === fromPos.currRow + direction
+			Math.abs(fromPos.col - toPos.col) === 1 && toPos.row === fromPos.row + direction
 		const isForwardMove = toPos.row === fromPos.row + direction && toPos.col === fromPos.col
 		const isDoubleMove =
 			isFirstMove && toPos.row === fromPos.row + direction * 2 && toPos.col === fromPos.col
@@ -278,8 +276,15 @@ export default function Board() {
 		/*
         TODO
         - Checkmate
+            - Look if king can move and not be in check
+            - Iterate through all pieces (of same color)
+                - Iterate through all possible moves
+                - Validate it blocks the check
         - Draw
+            - King is not in check but has no valid moves or other pieces to move
         - Castle
+            - Check if rook or king has been moved
+            - Make sure king is not in check after castling
         */
 
 		const fromSquare = board[fromPos.row][fromPos.col]
@@ -321,7 +326,6 @@ export default function Board() {
 				turn={isWhiteTurn}
 				whiteTally={whiteTally}
 				blackTally={blackTally}
-				badMove={isBadMove}
 			/>
 
 			{promotionSquare != null ? (

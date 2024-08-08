@@ -1,8 +1,5 @@
 import React, { useState } from "react"
 export default function GameInfo(props) {
-	/* TODO
-    - Game over
-    */
 	const pieces = {
 		k: "♔",
 		q: "♕",
@@ -30,7 +27,6 @@ export default function GameInfo(props) {
 					</div>
 				))}
 			</div>
-			{props.badMove ? <div>Bad</div> : null}
 		</div>
 	)
 }
