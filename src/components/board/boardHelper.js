@@ -1,7 +1,6 @@
 /*
     TODO
     - Checkmate
-        - Look if king can move and not be in check
         - Iterate through all pieces (of same color)
             - Iterate through all possible moves
             - Validate it blocks the check
@@ -12,20 +11,93 @@
         - Make sure king is not in check after castling
     */
 
-export function isCheckMate(board, king, kingColor) {
-	console.log(king)
-	console.log(board)
-	if (!isKingChecked(board, king.row, king.col)) return false
+export function isCheckMate(board, kingPos, kingColor) {
+	// console.log(kingPos)
+	// console.log(board)
+	if (!isKingChecked(board, kingPos.row, kingPos.col)) return false
 	console.log("Pass First Check")
-	// TODO can piece block
-	return !canKingMove(board, king, kingColor)
+
+	return !canPieceBlock(board, kingPos, kingColor)
+	//return !canKingMove(board, kingPos, kingColor)
+}
+//TODO possible moves
+function canPieceBlock(board, kingPos, kingColor) {
+	for (let row of board) {
+		for (let square of row) {
+			if (square.color !== kingColor) continue
+			// console.log(square)
+			if (canBishopBlock(board, square, kingPos)) return true
+			// switch (square.piece) {
+			// 	case "p":
+			// 		return
+			// 	case "r":
+			// 		return
+			// 	case "b":
+			// 		if (canBishopBlock(board, square, kingPos)) return true
+			// 		break
+			// 	case "n":
+			// 		return
+			// 	case "q":
+			// 		return
+			// 	case "k":
+			// 		return
+			// 	default:
+			// 		console.log("default")
+			// 		return false
+			//}
+		}
+	}
 }
 
-// function canPieceBlockCheck(board, king){
+function canBishopBlock(board, fromSquare, kingPos) {
+	console.log("Attempt")
+	console.log(fromSquare)
+	// (1,1), (1,-1,) (-1,1), (-1,-1)
+	const toPos = { row: fromSquare.row, col: fromSquare.col }
 
-// }
+	// Check diagonals
+	for (let r = -1; r <= 1; r++) {
+		if (r === 0) continue
+
+		for (let c = -1; c <= 1; c++) {
+			if (c === 0) continue
+			toPos.row = fromSquare.row
+			toPos.col = fromSquare.col
+
+			while (true) {
+				toPos.row += r
+				toPos.col += c
+				console.log(toPos.row, toPos.col)
+				if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) break
+
+				if (!validateDiagonalMove(board, fromSquare, toPos)) break
+
+				//TODO seperate into function
+				const newBoard = board.map((r) => r.map((square) => ({ ...square })))
+
+				newBoard[toPos.row][toPos.col] = {
+					...newBoard[toPos.row][toPos.col],
+					piece: "b",
+					color: fromSquare.color
+				}
+
+				newBoard[fromSquare.row][fromSquare.col] = {
+					...newBoard[kingPos.row][kingPos.col],
+					piece: null,
+					color: null
+				}
+
+				if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
+					console.log("Yes")
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
 function canKingMove(board, kingPos, kingColor) {
-	console.log(kingColor)
 	for (let r = -1; r <= 1; r++) {
 		for (let c = -1; c <= 1; c++) {
 			const newRow = kingPos.row + r
@@ -55,7 +127,7 @@ function canKingMove(board, kingPos, kingColor) {
 				color: null
 			}
 
-			console.log(newBoard, newRow, newCol)
+			//console.log(newBoard, newRow, newCol)
 			if (!isKingChecked(newBoard, newRow, newCol)) {
 				console.log("CAN MOVE")
 				return true
@@ -79,6 +151,7 @@ export function isKingChecked(board, kingRow, kingCol) {
 					{ row: king.row, col: king.col }
 				)
 			) {
+				console.log("CHECK")
 				return true
 			}
 		}
