@@ -27,7 +27,13 @@ export default function Square(props) {
 		<div
 			id={id}
 			className={`board-square ${
-				props.selected ? "selected" : (props.row + props.col) % 2 === 0 ? "light" : "dark"
+				props.badSelect
+					? "badSelect"
+					: props.selected
+					? "selected"
+					: (props.row + props.col) % 2 === 0
+					? "light"
+					: "dark"
 			}`}
 			onClick={props.onClick}
 		>

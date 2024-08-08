@@ -3,16 +3,17 @@ import React, { useState, useRef } from "react"
 import Square from "../square"
 import GameInfo from "../gameInfo"
 import PromotionChoices from "../promotionChoices"
-import * as boardHelper from "./boardHelper"
+import { validateMove } from "./boardHelper"
 
 import "../../styles.css"
 
 export default function Board() {
 	/* TODO 
     - Add game over banner
-    - Clean up states
     - Drag
     - Moves functions out of board
+    - Use global state providers
+    - If no possible moves set badSelect
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -47,10 +48,13 @@ export default function Board() {
 
 			//TODO check it works properly. Was at begining of validateMove
 			setBoardPiece(fromPos.row, fromPos.col, "selected", false)
-			const isValidMove = boardHelper.validateMove(chessBoard, fromPos, toPos)
+			const isValidMove = validateMove(chessBoard, fromPos, toPos)
 
 			if (isValidMove) {
 				movePiece(chessBoard, fromPos, toPos)
+			} else {
+				handleBadSelection(fromPos.row, fromPos.col)
+				handleBadSelection(row, col)
 			}
 			setSelectedPiece(null)
 		} else if (
@@ -59,12 +63,21 @@ export default function Board() {
 		) {
 			setSelectedPiece(clickedSquare)
 			setBoardPiece(row, col, "selected", true)
+		} else {
+			handleBadSelection(row, col)
 		}
 	}
 	const handlePromotionClick = (row, col, piece, color) => {
 		setBoardPiece(row, col, "piece", piece)
 		setBoardPiece(row, col, "color", color)
 		setPromotionSquare(null)
+	}
+	const handleBadSelection = (row, col) => {
+		setBoardPiece(row, col, "badSelect", true)
+
+		setTimeout(() => {
+			setBoardPiece(row, col, "badSelect", false)
+		}, 200)
 	}
 	const pawnPromotion = (square) => {
 		if (square.piece !== "p") return
@@ -143,7 +156,7 @@ export default function Board() {
 					continue
 				}
 				if (
-					boardHelper.validateMove(
+					validateMove(
 						board,
 						{ row: square.row, col: square.col },
 						{ row: king.row, col: king.col }
@@ -168,6 +181,7 @@ export default function Board() {
 								piece={square.piece}
 								color={square.color}
 								selected={square.selected}
+								badSelect={square.badSelect}
 								onClick={() => handleSquareClick(rowIndex, colIndex)}
 							/>
 						))}
@@ -214,16 +228,9 @@ const boardInit = () => {
 				col: c,
 				piece: newBoardSetup[r][c],
 				color: player,
-				selected: false
+				selected: false,
+				badSelect: false
 			})
-			/*
-            Square:
-            -row
-            -col
-            -piece
-            -color
-            )
-            */
 		}
 		board.push(currRow)
 	}

@@ -12,13 +12,19 @@
 
 .board-square {
 	position: relative;
-	width: 80px;
-	height: 80px;
+	width: 64px;
+	height: 64px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	font-size: 24px;
 }
-
+.board-square.badSelect {
+	background-color: red;
+}
+.board-square.selected {
+	background-color: aqua;
+}
 .board-square.light {
 	background-color: #f0d9b5;
 }
@@ -28,7 +34,7 @@
 }
 .board-label {
 	position: absolute;
-	font-size: 10px;
+	font-size: 12px;
 	color: #333;
 	pointer-events: none;
 }
@@ -48,4 +54,8 @@
 
 .black {
 	color: black;
+}
+
+.game-info {
+	background-color: forestgreen;
 }
