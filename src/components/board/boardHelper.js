@@ -1,3 +1,22 @@
+export function isKingChecked(board, king) {
+	for (let row of board) {
+		for (let square of row) {
+			if (!square.color || square.color === king.color) {
+				continue
+			}
+			if (
+				validateMove(
+					board,
+					{ row: square.row, col: square.col },
+					{ row: king.row, col: king.col }
+				)
+			) {
+				return true
+			}
+		}
+	}
+	return false
+}
 export function validateMove(board, fromPos, toPos) {
 	switch (board[fromPos.row][fromPos.col].piece) {
 		case "p":

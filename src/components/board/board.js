@@ -3,7 +3,7 @@ import React, { useState, useRef } from "react"
 import Square from "../square"
 import GameInfo from "../gameInfo"
 import PromotionChoices from "../promotionChoices"
-import { validateMove } from "./boardHelper"
+import { isKingChecked, validateMove } from "./boardHelper"
 
 import "../../styles.css"
 
@@ -46,8 +46,8 @@ export default function Board() {
 			const fromPos = { row: selectedPiece.row, col: selectedPiece.col }
 			const toPos = { row, col }
 
-			//TODO check it works properly. Was at begining of validateMove
 			setBoardPiece(fromPos.row, fromPos.col, "selected", false)
+
 			const isValidMove = validateMove(chessBoard, fromPos, toPos)
 
 			if (isValidMove) {
@@ -122,7 +122,8 @@ export default function Board() {
 			selected: false
 		}
 
-		if (isKingChecked(newBoard, fromSquare.color)) {
+		const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
+		if (isKingChecked(newBoard, king)) {
 			console.log("CHECKED")
 
 			if (fromSquare.piece !== "k") return false
@@ -147,26 +148,6 @@ export default function Board() {
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 		setChessBoard(newBoard)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
-	}
-	const isKingChecked = (board, color) => {
-		const king = color === "white" ? whiteKing.current : blackKing.current
-		for (let row of board) {
-			for (let square of row) {
-				if (!square.color || square.color === color) {
-					continue
-				}
-				if (
-					validateMove(
-						board,
-						{ row: square.row, col: square.col },
-						{ row: king.row, col: king.col }
-					)
-				) {
-					return true
-				}
-			}
-		}
-		return false
 	}
 	return (
 		<>
