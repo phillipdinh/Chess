@@ -37,8 +37,7 @@ export function isCheckMate(board, kingPos, kingColor) {
 	if (!isKingChecked(board, kingPos.row, kingPos.col)) return false
 	console.log("Pass First Check")
 
-	return !canPieceBlock(board, kingPos, kingColor)
-	//return !canKingMove(board, kingPos, kingColor)
+	return !canPieceBlock(board, kingPos, kingColor) && !canKingMove(board, kingPos, kingColor)
 }
 export function isKingChecked(board, kingRow, kingCol) {
 	const king = board[kingRow][kingCol]
@@ -121,8 +120,26 @@ function canPieceBlock(board, kingPos, kingColor) {
 		}
 	}
 }
+//TODO enpassant and double block
 function canPawnBlock(board, fromSquare, kingPos) {
-    
+	const fromPos = { row: fromSquare.row, col: fromSquare.col }
+	const direction = fromSquare.color === "white" ? -1 : 1
+
+	const toPos = { row: fromSquare.row + direction, col: fromSquare.col }
+
+	for (let c = -1; c <= 1; c++) {
+		toPos.col = fromPos.col + c
+		if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) continue
+		if (validatePawnMove(board, fromPos, toPos)) {
+			const newBoard = copyBoard(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
+
+			if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
+				console.log("Pawn block: ", fromPos)
+				return true
+			}
+		}
+	}
+	return false
 }
 function canOrthogonalBlock(board, fromSquare, kingPos) {
 	const fromPos = { row: fromSquare.row, col: fromSquare.col }
