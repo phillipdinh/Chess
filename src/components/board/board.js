@@ -148,8 +148,11 @@ export default function Board() {
 		setChessBoard(newBoard)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
 
-		const oppKing = fromSquare.color === "white" ? blackKing.current : whiteKing.current
-		isCheckMate(newBoard, oppKing)
+		// TODO optimize
+		const oppKingPos = fromSquare.color === "white" ? blackKing.current : whiteKing.current
+		const oppKingColor = fromSquare.color === "white" ? "black" : "white"
+
+		isCheckMate(newBoard, oppKingPos, oppKingColor)
 
 		return true
 	}

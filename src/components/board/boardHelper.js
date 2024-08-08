@@ -12,30 +12,31 @@
         - Make sure king is not in check after castling
     */
 
-export function isCheckMate(board, king) {
+export function isCheckMate(board, king, kingColor) {
 	console.log(king)
 	console.log(board)
 	if (!isKingChecked(board, king.row, king.col)) return false
 	console.log("Pass First Check")
 	// TODO can piece block
-	return !canKingMove(board, king)
+	return !canKingMove(board, king, kingColor)
 }
 
 // function canPieceBlockCheck(board, king){
 
 // }
-function canKingMove(board, king) {
+function canKingMove(board, kingPos, kingColor) {
+	console.log(kingColor)
 	for (let r = -1; r <= 1; r++) {
 		for (let c = -1; c <= 1; c++) {
-			const newRow = king.row + r
-			const newCol = king.col + c
+			const newRow = kingPos.row + r
+			const newCol = kingPos.col + c
 
 			if (r === 0 && c === 0) continue
 			if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) continue
 			if (
 				!validateKingMove(
 					board,
-					{ row: king.row, col: king.col },
+					{ row: kingPos.row, col: kingPos.col },
 					{ row: newRow, col: newCol }
 				)
 			)
@@ -46,16 +47,17 @@ function canKingMove(board, king) {
 			newBoard[newRow][newCol] = {
 				...newBoard[newRow][newCol],
 				piece: "k",
-				color: king.color
+				color: kingColor
 			}
-			newBoard[king.row][king.col] = {
-				...newBoard[king.row][king.col],
+			newBoard[kingPos.row][kingPos.col] = {
+				...newBoard[kingPos.row][kingPos.col],
 				piece: null,
 				color: null
 			}
-			console.log("ValidMove")
 
+			console.log(newBoard, newRow, newCol)
 			if (!isKingChecked(newBoard, newRow, newCol)) {
+				console.log("CAN MOVE")
 				return true
 			}
 		}
