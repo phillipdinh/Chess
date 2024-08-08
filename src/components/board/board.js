@@ -50,8 +50,7 @@ export default function Board() {
 
 			const isValidMove = validateMove(chessBoard, fromPos, toPos)
 
-			if (isValidMove) {
-				movePiece(chessBoard, fromPos, toPos)
+			if (isValidMove && movePiece(chessBoard, fromPos, toPos)) {
 			} else {
 				handleBadSelection(fromPos.row, fromPos.col)
 				handleBadSelection(row, col)
@@ -148,6 +147,8 @@ export default function Board() {
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 		setChessBoard(newBoard)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
+
+		return true
 	}
 	return (
 		<>
