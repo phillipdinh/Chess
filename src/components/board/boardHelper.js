@@ -17,7 +17,7 @@ export function validateMove(board, fromPos, toPos) {
 	}
 }
 
-export function validateOrthogonalMove(board, fromPos, toPos) {
+function validateOrthogonalMove(board, fromPos, toPos) {
 	const fromColor = board[fromPos.row][fromPos.col].color
 	const toColor = board[toPos.row][toPos.col].color
 
@@ -43,7 +43,7 @@ export function validateOrthogonalMove(board, fromPos, toPos) {
 	}
 	return true
 }
-export function validateDiagonalMove(board, fromPos, toPos) {
+function validateDiagonalMove(board, fromPos, toPos) {
 	const fromSquare = board[fromPos.row][fromPos.col]
 	const toSquare = board[toPos.row][toPos.col]
 	if (
@@ -67,7 +67,7 @@ export function validateDiagonalMove(board, fromPos, toPos) {
 	}
 	return true
 }
-export function validatePawnMove(board, fromPos, toPos) {
+function validatePawnMove(board, fromPos, toPos) {
 	//TODO: enpassant
 	// Prettier
 	const fromColor = board[fromPos.row][fromPos.col].color
@@ -99,13 +99,13 @@ export function validatePawnMove(board, fromPos, toPos) {
 	}
 	return false
 }
-export function validateRookMove(board, fromPos, toPos) {
+function validateRookMove(board, fromPos, toPos) {
 	return validateOrthogonalMove(board, fromPos, toPos)
 }
-export function validateBishopMove(board, fromPos, toPos) {
+function validateBishopMove(board, fromPos, toPos) {
 	return validateDiagonalMove(board, fromPos, toPos)
 }
-export function validateKnightMove(board, fromPos, toPos) {
+function validateKnightMove(board, fromPos, toPos) {
 	const fromSquare = board[fromPos.row][fromPos.col]
 	const toSquare = board[toPos.row][toPos.col]
 
@@ -120,12 +120,12 @@ export function validateKnightMove(board, fromPos, toPos) {
 	}
 	return false
 }
-export function validateQueenMove(board, fromPos, toPos) {
+function validateQueenMove(board, fromPos, toPos) {
 	return (
 		validateOrthogonalMove(board, fromPos, toPos) || validateDiagonalMove(board, fromPos, toPos)
 	)
 }
-export function validateKingMove(board, fromPos, toPos) {
+function validateKingMove(board, fromPos, toPos) {
 	/*
     TODO
     - Checkmate
