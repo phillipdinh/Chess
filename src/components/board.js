@@ -43,11 +43,13 @@ export default function Board() {
 		const clickedSquare = chessBoard[row][col]
 
 		if (selectedPiece) {
-			const { row: selectedRow, col: selectedCol } = selectedPiece
-			const isValidMove = validateMove(chessBoard, selectedRow, selectedCol, row, col)
+			const fromPos = { row: selectedPiece.row, col: selectedPiece.col }
+			const toPos = { row, col }
+
+			const isValidMove = validateMove(chessBoard, fromPos, toPos)
 
 			if (isValidMove) {
-				movePiece(chessBoard, selectedRow, selectedCol, row, col)
+				movePiece(chessBoard, fromPos, toPos)
 			} else {
 				setIsBadMove(true)
 			}
@@ -66,19 +68,17 @@ export default function Board() {
 		setPromotionSquare(null)
 	}
 	const pawnPromotion = (square) => {
-		console.log(square)
 		if (square.piece !== "p") return
-
 		if (square.color === "black" && square.row !== 7) return
-
 		if (square.color === "white" && square.row !== 0) return
-		console.log("HELLO")
 		setPromotionSquare(square)
 	}
-	const movePiece = (board, fromRow, fromCol, toRow, toCol) => {
-		const toSquare = board[toRow][toCol]
-		const fromSquare = board[fromRow][fromCol]
+	const movePiece = (board, fromPos, toPos) => {
+		const fromSquare = board[fromPos.row][fromPos.col]
+		const toSquare = board[toPos.row][toPos.col]
 
+		console.log(fromSquare.piece, fromPos.row, fromPos.col)
+		console.log(toSquare.piece, toPos.row, toPos.col)
 		if (
 			(isWhiteTurn && fromSquare.color === "black") ||
 			(!isWhiteTurn && fromSquare.color === "white")
@@ -88,39 +88,43 @@ export default function Board() {
 
 		// Only set chessBoard to newBoard if King is not checked
 		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
-		newBoard[toRow][toCol] = {
-			...newBoard[toRow][toCol],
+		newBoard[toPos.row][toPos.col] = {
+			...newBoard[toPos.row][toPos.col],
 			piece: fromSquare.piece,
 			color: fromSquare.color
 		}
-		newBoard[fromRow][fromCol] = {
-			...newBoard[fromRow][fromCol],
+		newBoard[fromPos.row][fromPos.col] = {
+			...newBoard[fromPos.row][fromPos.col],
 			piece: null,
 			color: null,
 			selected: false
 		}
 
 		if (isKingChecked(newBoard, fromSquare.color)) {
-			if (fromSquare.piece === "k" && fromSquare.color === "white") {
-				whiteKing.current.row = fromRow
-				whiteKing.current.col = fromCol
-			} else {
-				blackKing.current.row = fromRow
-				blackKing.current.col = fromCol
-			}
 			console.log("CHECKED")
+
+			if (fromSquare.piece !== "k") return false
+
+			if (fromSquare.color === "white") {
+				whiteKing.current.row = fromPos.row
+				whiteKing.current.col = fromPos.col
+			} else {
+				blackKing.current.row = fromPos.row
+				blackKing.current.col = fromPos.col
+			}
+
 			return false
 		}
-
 		if (
 			(isWhiteTurn && toSquare.color === "black") ||
 			(!isWhiteTurn && toSquare.color === "white")
 		) {
 			capturePiece(toSquare)
 		}
+
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 		setChessBoard(newBoard)
-		pawnPromotion(newBoard[toRow][toCol])
+		pawnPromotion(newBoard[toPos.row][toPos.col])
 	}
 	const isKingChecked = (board, color) => {
 		const king = color === "white" ? whiteKing.current : blackKing.current
@@ -129,75 +133,80 @@ export default function Board() {
 				if (!square.color || square.color === color) {
 					continue
 				}
-				if (validateMove(board, square.row, square.col, king.row, king.col)) {
+				if (
+					validateMove(
+						board,
+						{ row: square.row, col: square.col },
+						{ row: king.row, col: king.col }
+					)
+				) {
 					return true
 				}
 			}
 		}
 		return false
 	}
-	const validateMove = (board, fromRow, fromCol, toRow, toCol) => {
-		//console.log("From    : ", fromRow, fromCol)
-		// console.log("To (R,C): ", toRow, toCol)
-		setBoardPiece(fromRow, fromCol, "selected", false)
-		switch (board[fromRow][fromCol].piece) {
+	const validateMove = (board, fromPos, toPos) => {
+		setBoardPiece(fromPos.row, fromPos.col, "selected", false)
+		switch (board[fromPos.row][fromPos.col].piece) {
 			case "p":
-				return validatePawnMove(board, fromRow, fromCol, toRow, toCol)
+				return validatePawnMove(board, fromPos, toPos)
 			case "r":
-				return validateRookMove(board, fromRow, fromCol, toRow, toCol)
+				return validateRookMove(board, fromPos, toPos)
 			case "b":
-				return validateBishopMove(board, fromRow, fromCol, toRow, toCol)
+				return validateBishopMove(board, fromPos, toPos)
 			case "n":
-				return validateKnightMove(board, fromRow, fromCol, toRow, toCol)
+				return validateKnightMove(board, fromPos, toPos)
 			case "q":
-				return validateQueenMove(board, fromRow, fromCol, toRow, toCol)
+				return validateQueenMove(board, fromPos, toPos)
 			case "k":
-				return validateKingMove(board, fromRow, fromCol, toRow, toCol)
+				return validateKingMove(board, fromPos, toPos)
 			default:
 				return false
 		}
 	}
-	const validateOrthogonalMove = (board, fromRow, fromCol, toRow, toCol) => {
-		const fromSquare = board[fromRow][fromCol]
-		const toSquare = board[toRow][toCol]
-		if ((fromRow !== toRow && fromCol !== toCol) || fromSquare.color === toSquare.color) {
+	const validateOrthogonalMove = (board, fromPos, toPos) => {
+		const fromColor = board[fromPos.row][fromPos.col].color
+		const toColor = board[toPos.row][toPos.col].color
+
+		if ((fromPos.row !== toPos.row && fromPos.col !== toPos.col) || fromColor === toColor) {
 			return false
 		}
-		if (fromRow === toRow) {
-			let startCol = Math.min(fromCol, toCol)
-			let endCol = Math.max(fromCol, toCol)
+		if (fromPos.row === toPos.row) {
+			let startCol = Math.min(fromPos.col, toPos.col)
+			let endCol = Math.max(fromPos.col, toPos.col)
 			for (let col = startCol + 1; col <= endCol - 1; col++) {
-				if (board[toRow][col].piece) {
+				if (board[toPos.row][col].piece) {
 					return false
 				}
 			}
 		} else {
-			let startRow = Math.min(fromRow, toRow)
-			let endRow = Math.max(fromRow, toRow)
+			let startRow = Math.min(fromPos.row, toPos.row)
+			let endRow = Math.max(fromPos.row, toPos.row)
 			for (let row = startRow + 1; row < endRow; row++) {
-				if (board[row][toCol].piece) {
+				if (board[row][toPos.col].piece) {
 					return false
 				}
 			}
 		}
 		return true
 	}
-	const validateDiagonalMove = (board, fromRow, fromCol, toRow, toCol) => {
-		const fromSquare = board[fromRow][fromCol]
-		const toSquare = board[toRow][toCol]
+	const validateDiagonalMove = (board, fromPos, toPos) => {
+		const fromSquare = board[fromPos.row][fromPos.col]
+		const toSquare = board[toPos.row][toPos.col]
 		if (
-			Math.abs(fromRow - toRow) !== Math.abs(fromCol - toCol) ||
+			Math.abs(fromPos.row - toPos.row) !== Math.abs(fromPos.col - toPos.col) ||
 			fromSquare.color === toSquare.color
 		) {
 			return false
 		}
-		const rowDirection = toRow > fromRow ? 1 : -1
-		const colDirection = toCol > fromCol ? 1 : -1
+		const rowDirection = toPos.row > fromPos.row ? 1 : -1
+		const colDirection = toPos.col > fromPos.col ? 1 : -1
 
-		let currentRow = fromRow + rowDirection
-		let currentCol = fromCol + colDirection
+		let currentRow = fromPos.row + rowDirection
+		let currentCol = fromPos.col + colDirection
 
-		while (currentRow !== toRow && currentCol !== toCol) {
+		while (currentRow !== toPos.row && currentCol !== toPos.col) {
 			if (board[currentRow][currentCol].piece) {
 				return false
 			}
@@ -206,19 +215,21 @@ export default function Board() {
 		}
 		return true
 	}
-	const validatePawnMove = (board, fromRow, fromCol, toRow, toCol) => {
+	const validatePawnMove = (board, fromPos, toPos) => {
 		//TODO: enpassant
-
-		const toColor = board[toRow][toCol].color
-		const fromColor = board[fromRow][fromCol].color
+		// Prettier
+		const fromColor = board[fromPos.row][fromPos.col].color
+		const toColor = board[toPos.row][toPos.col].color
 		const direction = fromColor === "white" ? -1 : 1
 
 		//prettier-ignore
-		const isFirstMove = (fromRow === 1 && fromColor === "black") || 
-                            (fromRow === 6 && fromColor === "white")
-		const isDiagonalMove = Math.abs(fromCol - toCol) === 1 && toRow === fromRow + direction
-		const isForwardMove = toRow === fromRow + direction && toCol === fromCol
-		const isDoubleMove = isFirstMove && toRow === fromRow + direction * 2 && toCol === fromCol
+		const isFirstMove = (fromPos.row === 1 && fromColor === "black") || 
+                            (fromPos.row === 6 && fromColor === "white")
+		const isDiagonalMove =
+			Math.abs(fromPos.col - toPos.col) === 1 && toPos.row === fromPos.currRow + direction
+		const isForwardMove = toPos.row === fromPos.row + direction && toPos.col === fromPos.col
+		const isDoubleMove =
+			isFirstMove && toPos.row === fromPos.row + direction * 2 && toPos.col === fromPos.col
 
 		if (isDiagonalMove && toColor && fromColor !== toColor) {
 			return true
@@ -231,23 +242,23 @@ export default function Board() {
 		if (isForwardMove) {
 			return true
 		}
-		if (isDoubleMove && board[toRow - direction][toCol].color == null) {
+		if (isDoubleMove && board[toPos.row - direction][toPos.col].color == null) {
 			return true
 		}
 		return false
 	}
-	const validateRookMove = (board, fromRow, fromCol, toRow, toCol) => {
-		return validateOrthogonalMove(board, fromRow, fromCol, toRow, toCol)
+	const validateRookMove = (board, fromPos, toPos) => {
+		return validateOrthogonalMove(board, fromPos, toPos)
 	}
-	const validateBishopMove = (board, fromRow, fromCol, toRow, toCol) => {
-		return validateDiagonalMove(board, fromRow, fromCol, toRow, toCol)
+	const validateBishopMove = (board, fromPos, toPos) => {
+		return validateDiagonalMove(board, fromPos, toPos)
 	}
-	const validateKnightMove = (board, fromRow, fromCol, toRow, toCol) => {
-		const fromSquare = board[fromRow][fromCol]
-		const toSquare = board[toRow][toCol]
+	const validateKnightMove = (board, fromPos, toPos) => {
+		const fromSquare = board[fromPos.row][fromPos.col]
+		const toSquare = board[toPos.row][toPos.col]
 
-		const rowDiff = Math.abs(fromRow - toRow)
-		const colDiff = Math.abs(fromCol - toCol)
+		const rowDiff = Math.abs(fromPos.row - toPos.row)
+		const colDiff = Math.abs(fromPos.col - toPos.col)
 
 		if (
 			fromSquare.color !== toSquare.color &&
@@ -257,13 +268,13 @@ export default function Board() {
 		}
 		return false
 	}
-	const validateQueenMove = (board, fromRow, fromCol, toRow, toCol) => {
+	const validateQueenMove = (board, fromPos, toPos) => {
 		return (
-			validateOrthogonalMove(board, fromRow, fromCol, toRow, toCol) ||
-			validateDiagonalMove(board, fromRow, fromCol, toRow, toCol)
+			validateOrthogonalMove(board, fromPos, toPos) ||
+			validateDiagonalMove(board, fromPos, toPos)
 		)
 	}
-	const validateKingMove = (board, fromRow, fromCol, toRow, toCol) => {
+	const validateKingMove = (board, fromPos, toPos) => {
 		/*
         TODO
         - Checkmate
@@ -271,19 +282,19 @@ export default function Board() {
         - Castle
         */
 
-		const fromSquare = board[fromRow][fromCol]
+		const fromSquare = board[fromPos.row][fromPos.col]
 		if (
-			Math.max(Math.abs(fromRow - toRow), Math.abs(fromCol - toCol)) > 1 ||
-			board[fromRow][fromCol].color === board[toRow][toCol].color
+			Math.max(Math.abs(fromPos.row - toPos.row), Math.abs(fromPos.col - toPos.col)) > 1 ||
+			board[fromPos.row][fromPos.col].color === board[toPos.row][toPos.col].color
 		) {
 			return false
 		}
 		if (fromSquare.color === "white") {
-			whiteKing.current.row = toRow
-			whiteKing.current.col = toCol
+			whiteKing.current.row = toPos.row
+			whiteKing.current.col = toPos.col
 		} else {
-			blackKing.current.row = toRow
-			blackKing.current.col = toCol
+			blackKing.current.row = toPos.row
+			blackKing.current.col = toPos.col
 		}
 		return true
 	}
