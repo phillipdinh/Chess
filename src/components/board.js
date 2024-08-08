@@ -14,7 +14,7 @@ export default function Board() {
     - Clean up states
     - Passboard
     */
-	const [board, setBoard] = useState(boardInit())
+	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
 	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
 	const [whiteTally, setWhiteTally] = useState([])
@@ -26,7 +26,7 @@ export default function Board() {
 	const blackKing = useRef({ row: 0, col: 4 })
 
 	const setBoardPiece = (row, col, attr, val) => {
-		setBoard((prevBoard) => {
+		setChessBoard((prevBoard) => {
 			const newBoard = prevBoard.map((r) => r.map((square) => ({ ...square })))
 			newBoard[row][col][attr] = val
 			return newBoard
@@ -40,14 +40,14 @@ export default function Board() {
 		}
 	}
 	const handleSquareClick = (row, col) => {
-		const clickedSquare = board[row][col]
+		const clickedSquare = chessBoard[row][col]
 
 		if (selectedPiece) {
 			const { row: selectedRow, col: selectedCol } = selectedPiece
-			const isValidMove = validateMove(selectedRow, selectedCol, row, col)
+			const isValidMove = validateMove(chessBoard, selectedRow, selectedCol, row, col)
 
 			if (isValidMove) {
-				movePiece(selectedRow, selectedCol, row, col)
+				movePiece(chessBoard, selectedRow, selectedCol, row, col)
 			} else {
 				setIsBadMove(true)
 			}
@@ -61,19 +61,21 @@ export default function Board() {
 		}
 	}
 	const handlePromotionClick = (row, col, piece, color) => {
-		// const newBoard = board.map((row) => row.map((square) => ({ ...square })))
-		// newBoard[row][col].piece = piece
-		// newBoard[row][col].color = color
-		// setBoard(newBoard)
-
 		setBoardPiece(row, col, "piece", piece)
 		setBoardPiece(row, col, "color", color)
 		setPromotionSquare(null)
 	}
+	const pawnPromotion = (square) => {
+		console.log(square)
+		if (square.piece !== "p") return
 
-	//TODO Block check with another piece
-	// Restrict moving piece that is blocking a check
-	const movePiece = (fromRow, fromCol, toRow, toCol) => {
+		if (square.color === "black" && square.row !== 7) return
+
+		if (square.color === "white" && square.row !== 0) return
+		console.log("HELLO")
+		setPromotionSquare(square)
+	}
+	const movePiece = (board, fromRow, fromCol, toRow, toCol) => {
 		const toSquare = board[toRow][toCol]
 		const fromSquare = board[fromRow][fromCol]
 
@@ -84,9 +86,8 @@ export default function Board() {
 			return false
 		}
 
-		const oldBoard = board.map((row) => row.map((square) => ({ ...square })))
-
-		const newBoard = oldBoard.map((row) => row.map((square) => ({ ...square })))
+		// Only set chessBoard to newBoard if King is not checked
+		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
 		newBoard[toRow][toCol] = {
 			...newBoard[toRow][toCol],
 			piece: fromSquare.piece,
@@ -98,19 +99,16 @@ export default function Board() {
 			color: null,
 			selected: false
 		}
-		//TODO try to set king before and after check
-		// if (fromSquare.color === "white") {
-		// 	whiteKing.current.row = toRow
-		// 	whiteKing.current.col = toCol
-		// } else {
-		// 	blackKing.current.row = toRow
-		// 	blackKing.current.col = toCol
-		// }
-		//FIXME when king puts self it check board is not set to oldBoard
-		if (isKingChecked(fromSquare.color)) {
-			setBoard(oldBoard)
+
+		if (isKingChecked(newBoard, fromSquare.color)) {
+			if (fromSquare.piece === "k" && fromSquare.color === "white") {
+				whiteKing.current.row = fromRow
+				whiteKing.current.col = fromCol
+			} else {
+				blackKing.current.row = fromRow
+				blackKing.current.col = fromCol
+			}
 			console.log("CHECKED")
-			console.log(board)
 			return false
 		}
 
@@ -121,64 +119,45 @@ export default function Board() {
 			capturePiece(toSquare)
 		}
 		setIsWhiteTurn((prevTurn) => !prevTurn)
-
-		//FIXME put in new board
-		pawnPromotion(board[toRow][toCol])
-		//const newBoard = board.map((row) => row.map((square) => ({ ...square })))
-		// const newBoardFrom = newBoard[fromRow][fromCol]
-		// const newBoardTo = newBoard[toRow][toCol]
-
-		// newBoardTo.piece = newBoard[fromRow][fromCol].piece
-		// newBoardTo.color = fromSquare.color
-
-		// newBoardFrom.piece = null
-		// newBoardFrom.color = null
-
-		//newBoardFrom.selected = false
-
-		setBoard(newBoard)
+		setChessBoard(newBoard)
+		pawnPromotion(newBoard[toRow][toCol])
 	}
-	const isKingChecked = (color) => {
-		// console.log(board)
-		// console.log(color)
+	const isKingChecked = (board, color) => {
 		const king = color === "white" ? whiteKing.current : blackKing.current
-		// console.log(king)
 		for (let row of board) {
 			for (let square of row) {
 				if (!square.color || square.color === color) {
 					continue
 				}
-				if (validateMove(square.row, square.col, king.row, king.col)) {
+				if (validateMove(board, square.row, square.col, king.row, king.col)) {
 					return true
 				}
 			}
 		}
 		return false
 	}
-
-	// Need validateMove to work with 'newBoard'
-	const validateMove = (fromRow, fromCol, toRow, toCol) => {
+	const validateMove = (board, fromRow, fromCol, toRow, toCol) => {
 		//console.log("From    : ", fromRow, fromCol)
 		// console.log("To (R,C): ", toRow, toCol)
 		setBoardPiece(fromRow, fromCol, "selected", false)
 		switch (board[fromRow][fromCol].piece) {
 			case "p":
-				return validatePawnMove(fromRow, fromCol, toRow, toCol)
+				return validatePawnMove(board, fromRow, fromCol, toRow, toCol)
 			case "r":
-				return validateRookMove(fromRow, fromCol, toRow, toCol)
+				return validateRookMove(board, fromRow, fromCol, toRow, toCol)
 			case "b":
-				return validateBishopMove(fromRow, fromCol, toRow, toCol)
+				return validateBishopMove(board, fromRow, fromCol, toRow, toCol)
 			case "n":
-				return validateKnightMove(fromRow, fromCol, toRow, toCol)
+				return validateKnightMove(board, fromRow, fromCol, toRow, toCol)
 			case "q":
-				return validateQueenMove(fromRow, fromCol, toRow, toCol)
+				return validateQueenMove(board, fromRow, fromCol, toRow, toCol)
 			case "k":
-				return validateKingMove(fromRow, fromCol, toRow, toCol)
+				return validateKingMove(board, fromRow, fromCol, toRow, toCol)
 			default:
 				return false
 		}
 	}
-	const validateOrthogonalMove = (fromRow, fromCol, toRow, toCol) => {
+	const validateOrthogonalMove = (board, fromRow, fromCol, toRow, toCol) => {
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
 		if ((fromRow !== toRow && fromCol !== toCol) || fromSquare.color === toSquare.color) {
@@ -203,11 +182,9 @@ export default function Board() {
 		}
 		return true
 	}
-	const validateDiagonalMove = (fromRow, fromCol, toRow, toCol) => {
+	const validateDiagonalMove = (board, fromRow, fromCol, toRow, toCol) => {
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
-		// console.log(fromSquare)
-		// console.log(toSquare)
 		if (
 			Math.abs(fromRow - toRow) !== Math.abs(fromCol - toCol) ||
 			fromSquare.color === toSquare.color
@@ -227,10 +204,9 @@ export default function Board() {
 			currentRow += rowDirection
 			currentCol += colDirection
 		}
-		console.log("valid")
 		return true
 	}
-	const validatePawnMove = (fromRow, fromCol, toRow, toCol) => {
+	const validatePawnMove = (board, fromRow, fromCol, toRow, toCol) => {
 		//TODO: enpassant
 
 		const toColor = board[toRow][toCol].color
@@ -260,13 +236,13 @@ export default function Board() {
 		}
 		return false
 	}
-	const validateRookMove = (fromRow, fromCol, toRow, toCol) => {
-		return validateOrthogonalMove(fromRow, fromCol, toRow, toCol)
+	const validateRookMove = (board, fromRow, fromCol, toRow, toCol) => {
+		return validateOrthogonalMove(board, fromRow, fromCol, toRow, toCol)
 	}
-	const validateBishopMove = (fromRow, fromCol, toRow, toCol) => {
-		return validateDiagonalMove(fromRow, fromCol, toRow, toCol)
+	const validateBishopMove = (board, fromRow, fromCol, toRow, toCol) => {
+		return validateDiagonalMove(board, fromRow, fromCol, toRow, toCol)
 	}
-	const validateKnightMove = (fromRow, fromCol, toRow, toCol) => {
+	const validateKnightMove = (board, fromRow, fromCol, toRow, toCol) => {
 		const fromSquare = board[fromRow][fromCol]
 		const toSquare = board[toRow][toCol]
 
@@ -281,20 +257,18 @@ export default function Board() {
 		}
 		return false
 	}
-	const validateQueenMove = (fromRow, fromCol, toRow, toCol) => {
+	const validateQueenMove = (board, fromRow, fromCol, toRow, toCol) => {
 		return (
-			validateOrthogonalMove(fromRow, fromCol, toRow, toCol) ||
-			validateDiagonalMove(fromRow, fromCol, toRow, toCol)
+			validateOrthogonalMove(board, fromRow, fromCol, toRow, toCol) ||
+			validateDiagonalMove(board, fromRow, fromCol, toRow, toCol)
 		)
 	}
-	const validateKingMove = (fromRow, fromCol, toRow, toCol) => {
+	const validateKingMove = (board, fromRow, fromCol, toRow, toCol) => {
 		/*
         TODO
-        - checkmate
+        - Checkmate
         - Draw
-        - Ppdate king square
         - Castle
-        - Check if move gets rid of check
         */
 
 		const fromSquare = board[fromRow][fromCol]
@@ -313,21 +287,10 @@ export default function Board() {
 		}
 		return true
 	}
-
-    //FIXME color not matching
-	const pawnPromotion = (square) => {
-		if (square.piece !== "p") return
-
-		if (square.color === "black" && square.row !== 7) return
-
-		if (square.color === "white" && square.row !== 0) return
-		console.log("HELLO")
-		setPromotionSquare(square)
-	}
 	return (
 		<>
 			<div className="board">
-				{board.map((row, rowIndex) => (
+				{chessBoard.map((row, rowIndex) => (
 					<div key={rowIndex} className="board-row">
 						{row.map((square, colIndex) => (
 							<Square
