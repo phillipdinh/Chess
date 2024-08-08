@@ -27,6 +27,7 @@ export default function GameInfo(props) {
 					</div>
 				))}
 			</div>
+			{props.badMove ? <div>Bad</div> : null}
 		</div>
 	)
 }
