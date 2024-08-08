@@ -3,7 +3,7 @@ import React, { useState, useRef } from "react"
 import Square from "../square"
 import GameInfo from "../gameInfo"
 import PromotionChoices from "../promotionChoices"
-import { isKingChecked, validateMove } from "./boardHelper"
+import { isCheckMate, isKingChecked, validateMove } from "./boardHelper"
 
 import "../../styles.css"
 
@@ -11,7 +11,6 @@ export default function Board() {
 	/* TODO 
     - Add game over banner
     - Drag
-    - Moves functions out of board
     - Use global state providers
     - If no possible moves set badSelect
     */
@@ -41,7 +40,6 @@ export default function Board() {
 	}
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = chessBoard[row][col]
-
 		if (selectedPiece) {
 			const fromPos = { row: selectedPiece.row, col: selectedPiece.col }
 			const toPos = { row, col }
@@ -56,7 +54,9 @@ export default function Board() {
 				handleBadSelection(row, col)
 			}
 			setSelectedPiece(null)
-		} else if (
+		}
+		// Valid piece selection
+		else if (
 			(clickedSquare.color === "white" && isWhiteTurn) ||
 			(clickedSquare.color === "black" && !isWhiteTurn)
 		) {
@@ -122,7 +122,7 @@ export default function Board() {
 		}
 
 		const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
-		if (isKingChecked(newBoard, king)) {
+		if (isKingChecked(newBoard, king.row, king.col)) {
 			console.log("CHECKED")
 
 			if (fromSquare.piece !== "k") return false
@@ -147,6 +147,9 @@ export default function Board() {
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 		setChessBoard(newBoard)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
+
+		const oppKing = fromSquare.color === "white" ? blackKing.current : whiteKing.current
+		isCheckMate(newBoard, oppKing)
 
 		return true
 	}

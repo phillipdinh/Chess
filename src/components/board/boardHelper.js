@@ -1,4 +1,70 @@
-export function isKingChecked(board, king) {
+/*
+    TODO
+    - Checkmate
+        - Look if king can move and not be in check
+        - Iterate through all pieces (of same color)
+            - Iterate through all possible moves
+            - Validate it blocks the check
+    - Draw
+        - King is not in check but has no valid moves or other pieces to move
+    - Castle
+        - Check if rook or king has been moved
+        - Make sure king is not in check after castling
+    */
+
+export function isCheckMate(board, king) {
+	console.log(king)
+	console.log(board)
+	if (!isKingChecked(board, king.row, king.col)) return false
+	console.log("Pass First Check")
+	// TODO can piece block
+	return !canKingMove(board, king)
+}
+
+// function canPieceBlockCheck(board, king){
+
+// }
+function canKingMove(board, king) {
+	for (let r = -1; r <= 1; r++) {
+		for (let c = -1; c <= 1; c++) {
+			const newRow = king.row + r
+			const newCol = king.col + c
+
+			if (r === 0 && c === 0) continue
+			if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) continue
+			if (
+				!validateKingMove(
+					board,
+					{ row: king.row, col: king.col },
+					{ row: newRow, col: newCol }
+				)
+			)
+				continue
+
+			const newBoard = board.map((r) => r.map((square) => ({ ...square })))
+
+			newBoard[newRow][newCol] = {
+				...newBoard[newRow][newCol],
+				piece: "k",
+				color: king.color
+			}
+			newBoard[king.row][king.col] = {
+				...newBoard[king.row][king.col],
+				piece: null,
+				color: null
+			}
+			console.log("ValidMove")
+
+			if (!isKingChecked(newBoard, newRow, newCol)) {
+				return true
+			}
+		}
+	}
+	console.log("CHECKMATE")
+	return false
+}
+export function isKingChecked(board, kingRow, kingCol) {
+	const king = board[kingRow][kingCol]
 	for (let row of board) {
 		for (let square of row) {
 			if (!square.color || square.color === king.color) {
@@ -17,6 +83,16 @@ export function isKingChecked(board, king) {
 	}
 	return false
 }
+function validateKingMove(board, fromPos, toPos) {
+	if (
+		Math.max(Math.abs(fromPos.row - toPos.row), Math.abs(fromPos.col - toPos.col)) > 1 ||
+		board[fromPos.row][fromPos.col].color === board[toPos.row][toPos.col].color
+	) {
+		return false
+	}
+	return true
+}
+
 export function validateMove(board, fromPos, toPos) {
 	switch (board[fromPos.row][fromPos.col].piece) {
 		case "p":
@@ -34,6 +110,11 @@ export function validateMove(board, fromPos, toPos) {
 		default:
 			return false
 	}
+}
+function validateQueenMove(board, fromPos, toPos) {
+	return (
+		validateOrthogonalMove(board, fromPos, toPos) || validateDiagonalMove(board, fromPos, toPos)
+	)
 }
 
 function validateOrthogonalMove(board, fromPos, toPos) {
@@ -138,31 +219,4 @@ function validateKnightMove(board, fromPos, toPos) {
 		return true
 	}
 	return false
-}
-function validateQueenMove(board, fromPos, toPos) {
-	return (
-		validateOrthogonalMove(board, fromPos, toPos) || validateDiagonalMove(board, fromPos, toPos)
-	)
-}
-function validateKingMove(board, fromPos, toPos) {
-	/*
-    TODO
-    - Checkmate
-        - Look if king can move and not be in check
-        - Iterate through all pieces (of same color)
-            - Iterate through all possible moves
-            - Validate it blocks the check
-    - Draw
-        - King is not in check but has no valid moves or other pieces to move
-    - Castle
-        - Check if rook or king has been moved
-        - Make sure king is not in check after castling
-    */
-	if (
-		Math.max(Math.abs(fromPos.row - toPos.row), Math.abs(fromPos.col - toPos.col)) > 1 ||
-		board[fromPos.row][fromPos.col].color === board[toPos.row][toPos.col].color
-	) {
-		return false
-	}
-	return true
 }
