@@ -6,8 +6,6 @@
         - Check if rook or king has been moved
         - Make sure king is not in check after castling
     */
-
-// TODO seperate into own files by piece
 export function tryMove(board, fromPos, toPos, piece, color) {
 	const newBoard = board.map((r) => r.map((square) => ({ ...square })))
 
@@ -109,9 +107,8 @@ function canPieceBlock(board, kingPos, kingColor) {
 }
 //TODO enpassant and double block
 function canPawnBlock(board, fromSquare, kingPos) {
-	const fromPos = { row: fromSquare.row, col: fromSquare.col }
 	const direction = fromSquare.color === "white" ? -1 : 1
-
+	const fromPos = { row: fromSquare.row, col: fromSquare.col }
 	const toPos = { row: fromSquare.row + direction, col: fromSquare.col }
 
 	for (let c = -1; c <= 1; c++) {
@@ -130,22 +127,20 @@ function canPawnBlock(board, fromSquare, kingPos) {
 }
 function canOrthogonalBlock(board, fromSquare, kingPos) {
 	const fromPos = { row: fromSquare.row, col: fromSquare.col }
-	const toPos = { row: fromSquare.row, col: fromSquare.col }
 
 	const directions = [
-		[-1, 0],
-		[1, 0],
-		[0, 1],
-		[0, -1]
+		{ row: -1, col: 0 }, // Top
+		{ row: 1, col: 0 }, // Bottom
+		{ row: 0, col: 1 }, // Right
+		{ row: 0, col: -1 } // Left
 	]
 
-	for (let newPos of directions) {
-		toPos.row = fromPos.row
-		toPos.col = fromPos.col
+	for (const { row: r, col: c } of directions) {
+		let toPos = { ...fromPos }
 
 		while (true) {
-			toPos.row += newPos[0]
-			toPos.col += newPos[1]
+			toPos.row += r
+			toPos.col += c
 
 			if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) break
 
@@ -163,30 +158,29 @@ function canOrthogonalBlock(board, fromSquare, kingPos) {
 
 function canDiagonalBlock(board, fromSquare, kingPos) {
 	const fromPos = { row: fromSquare.row, col: fromSquare.col }
-	const toPos = { row: fromSquare.row, col: fromSquare.col }
 
-	// TODO try to unnest
-	for (let r = -1; r <= 1; r++) {
-		if (r === 0) continue
+	const directions = [
+		{ row: -1, col: -1 }, // Top-left
+		{ row: -1, col: 1 }, // Top-right
+		{ row: 1, col: -1 }, // Bottom-left
+		{ row: 1, col: 1 } // Bottom-right
+	]
 
-		for (let c = -1; c <= 1; c++) {
-			if (c === 0) continue
-			toPos.row = fromPos.row
-			toPos.col = fromPos.col
+	for (const { row: r, col: c } of directions) {
+		let toPos = { ...fromPos }
 
-			while (true) {
-				toPos.row += r
-				toPos.col += c
-				if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) break
+		while (true) {
+			toPos.row += r
+			toPos.col += c
+			if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) break
 
-				if (!validateDiagonalMove(board, fromPos, toPos)) break
+			if (!validateDiagonalMove(board, fromPos, toPos)) break
 
-				const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
+			const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 
-				if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
-					console.log("Diagonal Block: ", fromPos)
-					return true
-				}
+			if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
+				console.log("Diagonal Block: ", fromPos)
+				return true
 			}
 		}
 	}
@@ -205,42 +199,36 @@ function canBishopBlock(board, fromSquare, kingPos) {
 	return canDiagonalBlock(board, fromSquare, kingPos)
 }
 function canKnightBlock(board, fromSquare, kingPos) {
-	const directions = [-2, -1, 1, 2]
+	const knightMoves = [
+		{ row: -2, col: -1 },
+		{ row: -2, col: 1 },
+		{ row: -1, col: -2 },
+		{ row: -1, col: 2 },
+		{ row: 1, col: -2 },
+		{ row: 1, col: 2 },
+		{ row: 2, col: -1 },
+		{ row: 2, col: 1 }
+	]
 
 	const fromPos = { row: fromSquare.row, col: fromSquare.col }
-	const toPos = { row: fromSquare.row, col: fromSquare.col }
 
-	for (let r of directions) {
-		for (let c of directions) {
-			if ((r === -2 || r === 2) && (c === -2 || c === 2)) continue
-			if ((c === -1 || c === 1) && (r === -1 || r === 1)) continue
+	for (const { row: r, col: c } of knightMoves) {
+		const toPos = { row: fromPos.row + r, col: fromPos.col + c }
 
-			toPos.row = fromSquare.row + r
-			toPos.col = fromSquare.col + c
-			if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) continue
+		if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) continue
 
-			if (validateKnightMove(board, fromPos, toPos)) {
-				const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
+		if (validateKnightMove(board, fromPos, toPos)) {
+			const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 
-				if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
-					console.log("Knight Block: ", fromPos)
-					return true
-				}
+			if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
+				console.log("Knight Block: ", fromPos)
+				return true
 			}
 		}
 	}
+
 	return false
 }
-function validateKingMove(board, fromPos, toPos) {
-	if (
-		Math.max(Math.abs(fromPos.row - toPos.row), Math.abs(fromPos.col - toPos.col)) > 1 ||
-		board[fromPos.row][fromPos.col].color === board[toPos.row][toPos.col].color
-	) {
-		return false
-	}
-	return true
-}
-
 export function validateMove(board, fromPos, toPos) {
 	switch (board[fromPos.row][fromPos.col].piece) {
 		case "p":
@@ -259,12 +247,6 @@ export function validateMove(board, fromPos, toPos) {
 			return false
 	}
 }
-function validateQueenMove(board, fromPos, toPos) {
-	return (
-		validateOrthogonalMove(board, fromPos, toPos) || validateDiagonalMove(board, fromPos, toPos)
-	)
-}
-
 function validateOrthogonalMove(board, fromPos, toPos) {
 	const fromColor = board[fromPos.row][fromPos.col].color
 	const toColor = board[toPos.row][toPos.col].color
@@ -315,9 +297,42 @@ function validateDiagonalMove(board, fromPos, toPos) {
 	}
 	return true
 }
+function validateKingMove(board, fromPos, toPos) {
+	if (
+		Math.max(Math.abs(fromPos.row - toPos.row), Math.abs(fromPos.col - toPos.col)) > 1 ||
+		board[fromPos.row][fromPos.col].color === board[toPos.row][toPos.col].color
+	) {
+		return false
+	}
+	return true
+}
+function validateQueenMove(board, fromPos, toPos) {
+	return (
+		validateOrthogonalMove(board, fromPos, toPos) || validateDiagonalMove(board, fromPos, toPos)
+	)
+}
+function validateRookMove(board, fromPos, toPos) {
+	return validateOrthogonalMove(board, fromPos, toPos)
+}
+function validateBishopMove(board, fromPos, toPos) {
+	return validateDiagonalMove(board, fromPos, toPos)
+}
+function validateKnightMove(board, fromPos, toPos) {
+	const fromSquare = board[fromPos.row][fromPos.col]
+	const toSquare = board[toPos.row][toPos.col]
+	const rowDiff = Math.abs(fromPos.row - toPos.row)
+	const colDiff = Math.abs(fromPos.col - toPos.col)
+
+	if (
+		fromSquare.color !== toSquare.color &&
+		((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2))
+	) {
+		return true
+	}
+	return false
+}
 function validatePawnMove(board, fromPos, toPos) {
 	//TODO: enpassant
-	// Prettier
 	const fromColor = board[fromPos.row][fromPos.col].color
 	const toColor = board[toPos.row][toPos.col].color
 	const direction = fromColor === "white" ? -1 : 1
@@ -343,26 +358,6 @@ function validatePawnMove(board, fromPos, toPos) {
 		return true
 	}
 	if (isDoubleMove && board[toPos.row - direction][toPos.col].color == null) {
-		return true
-	}
-	return false
-}
-function validateRookMove(board, fromPos, toPos) {
-	return validateOrthogonalMove(board, fromPos, toPos)
-}
-function validateBishopMove(board, fromPos, toPos) {
-	return validateDiagonalMove(board, fromPos, toPos)
-}
-function validateKnightMove(board, fromPos, toPos) {
-	const fromSquare = board[fromPos.row][fromPos.col]
-	const toSquare = board[toPos.row][toPos.col]
-	const rowDiff = Math.abs(fromPos.row - toPos.row)
-	const colDiff = Math.abs(fromPos.col - toPos.col)
-
-	if (
-		fromSquare.color !== toSquare.color &&
-		((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2))
-	) {
 		return true
 	}
 	return false
