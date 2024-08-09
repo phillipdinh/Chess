@@ -16,7 +16,7 @@ export default function Square(props) {
 			case "p":
 				return "♙"
 			default:
-				return null // No piece
+				return null
 		}
 	}
 	const showCol = props.row === 7
