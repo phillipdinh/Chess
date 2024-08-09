@@ -1,7 +1,5 @@
 import React from "react"
 export default function GameInfo(props) {
-	//TODO add css
-	// unique color for tally label
 	const pieces = {
 		k: "♔",
 		q: "♕",
