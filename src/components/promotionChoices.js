@@ -10,18 +10,20 @@ export default function PromotionChoices(props) {
 		top: `${props.square.row * 80 + 32}px`
 	}
 	return (
-		<div className="pawn-promotion" style={styles}>
-			<div className="promotion-choice" onClick={() => handlePromotion("q")}>
-				♕
-			</div>
-			<div className="promotion-choice" onClick={() => handlePromotion("r")}>
-				♖
-			</div>
-			<div className="promotion-choice" onClick={() => handlePromotion("b")}>
-				♗
-			</div>
-			<div className="promotion-choice" onClick={() => handlePromotion("n")}>
-				♞
+		<div className="screen-overlay">
+			<div className="pawn-promotion" style={styles}>
+				<div className="promotion-choice" onClick={() => handlePromotion("q")}>
+					♕
+				</div>
+				<div className="promotion-choice" onClick={() => handlePromotion("r")}>
+					♖
+				</div>
+				<div className="promotion-choice" onClick={() => handlePromotion("b")}>
+					♗
+				</div>
+				<div className="promotion-choice" onClick={() => handlePromotion("n")}>
+					♞
+				</div>
 			</div>
 		</div>
 	)
