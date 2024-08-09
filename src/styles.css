@@ -59,3 +59,26 @@
 .game-info {
 	background-color: forestgreen;
 }
+
+.pawn-promotion {
+	position: absolute;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	background-color: white;
+	border: 1px solid black;
+	border-radius: 4px;
+	z-index: 1000;
+	font-size: 24px;
+}
+
+.promotion-choice {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0 4px 0 4px;
+	cursor: pointer;
+}
+
+.promotion-choice:hover {
+	background-color: lightgray;
+}
