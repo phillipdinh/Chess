@@ -34,10 +34,10 @@
 	justify-content: center;
 }
 .board-square.badSelect {
-	background-color: red;
+	background-color: #a42a04;
 }
 .board-square.selected {
-	background-color: aqua;
+	background-color: rgb(78, 120, 55);
 }
 .board-square.light {
 	background-color: #f0d9b5;
