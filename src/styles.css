@@ -1,23 +1,29 @@
+.page {
+	display: flex;
+	flex-direction: row;
+}
+
 .board {
 	display: flex;
 	flex-direction: column;
 	width: 640px;
 	height: 640px;
 	border: 2px solid black;
+	border-radius: 4px;
+	margin-top: 32px;
+	margin-left: 32px;
+	box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3), -2px 2px 6px rgba(0, 0, 0, 0.3);
 }
-
 .board-row {
 	display: flex;
 }
-
 .board-square {
 	position: relative;
-	width: 64px;
-	height: 64px;
+	width: 80px;
+	height: 80px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 24px;
 }
 .board-square.badSelect {
 	background-color: red;
@@ -28,7 +34,6 @@
 .board-square.light {
 	background-color: #f0d9b5;
 }
-
 .board-square.dark {
 	background-color: #b58863;
 }
@@ -38,47 +43,90 @@
 	color: #333;
 	pointer-events: none;
 }
-
 .row-label {
 	top: 2px;
 	left: 2px;
 }
-
 .col-label {
 	bottom: 2px;
 	right: 2px;
 }
 .white {
-	color: white;
+	color: rgb(249, 246, 238);
 }
-
 .black {
-	color: black;
+	color: rgba(53, 56, 57);
 }
-
-.game-info {
-	background-color: forestgreen;
+.piece {
+	font-size: 56px;
+	text-shadow: -0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000;
 }
-
 .pawn-promotion {
 	position: absolute;
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
 	background-color: white;
-	border: 1px solid black;
-	border-radius: 4px;
+	border: 1px solid rgb(150, 150, 150);
+	border-radius: 3px;
 	z-index: 1000;
-	font-size: 24px;
+	font-size: 28px;
+	margin-top: 1px;
+	box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .promotion-choice {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	padding: 0 4px 0 4px;
+	padding: 2px 6px 0 6px;
 	cursor: pointer;
 }
 
 .promotion-choice:hover {
 	background-color: lightgray;
+}
+
+.game-info {
+	margin-top: 32px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	background-color: rgba(30, 30, 30, 0.3);
+	margin-left: 24px;
+	border-radius: 4px;
+	box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3), -2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.info-container {
+	margin-left: 6px;
+	margin-right: 6px;
+}
+
+.info-label {
+	font-weight: bold;
+	font-size: 24px;
+	margin: 10px;
+}
+
+.info-label.black {
+	color: black;
+}
+
+.info-label.white {
+	color: white;
+}
+
+.captured-container {
+	display: flex;
+	flex-direction: row;
+	max-width: 144px;
+}
+.captured-container.black {
+	flex-wrap: wrap-reverse;
+}
+.captured-container.white {
+	flex-wrap: wrap;
+}
+.captured-pieces {
+	font-size: 24px;
 }
