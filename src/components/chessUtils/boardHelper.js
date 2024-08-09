@@ -1,9 +1,5 @@
 /*
     TODO
-    - Checkmate
-        - Iterate through all pieces (of same color)
-            - Iterate through all possible moves
-            - Validate it blocks the check
     - Draw
         - King is not in check but has no valid moves or other pieces to move
     - Castle
@@ -13,7 +9,6 @@
 
 // TODO seperate into own files by piece
 export function copyBoard(board, fromPos, toPos, piece, color) {
-	//TODO seperate into function
 	const newBoard = board.map((r) => r.map((square) => ({ ...square })))
 
 	newBoard[toPos.row][toPos.col] = {
@@ -35,7 +30,7 @@ export function isCheckMate(board, kingPos, kingColor) {
 	// console.log(kingPos)
 	// console.log(board)
 	if (!isKingChecked(board, kingPos.row, kingPos.col)) return false
-	console.log("Pass First Check")
+	console.log("First CHECK")
 
 	return !canPieceBlock(board, kingPos, kingColor) && !canKingMove(board, kingPos, kingColor)
 }
@@ -53,14 +48,12 @@ export function isKingChecked(board, kingRow, kingCol) {
 					{ row: king.row, col: king.col }
 				)
 			) {
-				console.log("CHECK")
 				return true
 			}
 		}
 	}
 	return false
 }
-// Check if it works
 function canKingMove(board, kingPos, kingColor) {
 	for (let r = -1; r <= 1; r++) {
 		for (let c = -1; c <= 1; c++) {
@@ -88,15 +81,10 @@ function canKingMove(board, kingPos, kingColor) {
 	console.log("CHECKMATE")
 	return false
 }
-
-//TODO possible moves
 function canPieceBlock(board, kingPos, kingColor) {
 	for (let row of board) {
 		for (let square of row) {
 			if (square.color !== kingColor) continue
-			// console.log(square)
-			// FIXME make sure canBlock functions dont return after checking the first
-			// TODO change default
 			switch (square.piece) {
 				case "p":
 					if (canPawnBlock(board, square, kingPos)) return true
@@ -114,8 +102,7 @@ function canPieceBlock(board, kingPos, kingColor) {
 					if (canQueenBlock(board, square, kingPos)) return true
 					break
 				default:
-					console.log("default")
-				//return false
+					console.log("Square:", square)
 			}
 		}
 	}
@@ -134,7 +121,7 @@ function canPawnBlock(board, fromSquare, kingPos) {
 			const newBoard = copyBoard(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 
 			if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
-				console.log("Pawn block: ", fromPos)
+				console.log("Pawn Block: ", fromPos)
 				return true
 			}
 		}
@@ -167,7 +154,7 @@ function canOrthogonalBlock(board, fromSquare, kingPos) {
 			const newBoard = copyBoard(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 
 			if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
-				console.log("Orthogonal block: ", fromPos)
+				console.log("Orthogonal Block: ", fromPos)
 				return true
 			}
 		}
@@ -203,7 +190,7 @@ function canDiagonalBlock(board, fromSquare, kingPos) {
 				)
 
 				if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
-					console.log("Diagonal block: ", fromPos)
+					console.log("Diagonal Block: ", fromPos)
 					return true
 				}
 			}
@@ -211,14 +198,12 @@ function canDiagonalBlock(board, fromSquare, kingPos) {
 	}
 	return false
 }
-//TODO add orthongonal
 function canQueenBlock(board, fromSquare, kingPos) {
 	return (
 		canDiagonalBlock(board, fromSquare, kingPos) ||
 		canOrthogonalBlock(board, fromSquare, kingPos)
 	)
 }
-
 function canRookBlock(board, fromSquare, kingPos) {
 	return canOrthogonalBlock(board, fromSquare, kingPos)
 }
@@ -240,7 +225,6 @@ function canKnightBlock(board, fromSquare, kingPos) {
 			toPos.col = fromSquare.col + c
 			if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) continue
 
-			// TODO make sure to check all moves before return
 			if (validateKnightMove(board, fromPos, toPos)) {
 				const newBoard = copyBoard(
 					board,
@@ -251,7 +235,7 @@ function canKnightBlock(board, fromSquare, kingPos) {
 				)
 
 				if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
-					console.log("Knight block: ", fromPos)
+					console.log("Knight Block: ", fromPos)
 					return true
 				}
 			}

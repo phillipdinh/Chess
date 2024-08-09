@@ -1,11 +1,12 @@
 import React, { useState, useRef } from "react"
 
-import Square from "../square"
-import GameInfo from "../gameInfo"
-import PromotionChoices from "../promotionChoices"
-import { isCheckMate, isKingChecked, validateMove } from "./boardHelper"
+import Square from "./square"
+import GameInfo from "./gameInfo"
+import GameOver from "./gameOver"
+import PromotionChoices from "./promotionChoices"
+import { isCheckMate, isKingChecked, validateMove } from "./chessUtils/boardHelper"
 
-import "../../styles.css"
+import "../styles.css"
 
 export default function Board() {
 	/* TODO 
@@ -13,6 +14,9 @@ export default function Board() {
     - Drag
     - Use global state providers
     - If no possible moves set badSelect
+    - Create getKingFunction
+    - SetGameOver and pass down winner info
+    - Try to reorganize states
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -20,6 +24,7 @@ export default function Board() {
 	const [whiteTally, setWhiteTally] = useState([])
 	const [blackTally, setBlackTally] = useState([])
 	const [promotionSquare, setPromotionSquare] = useState(null)
+	const [isGameOver, setIsGameOver] = useState(false)
 
 	const whiteKing = useRef({ row: 7, col: 4 })
 	const blackKing = useRef({ row: 0, col: 4 })
@@ -33,9 +38,9 @@ export default function Board() {
 	}
 	const capturePiece = (piece) => {
 		if (piece.color === "black") {
-			setWhiteTally((prevTally) => [...prevTally, piece])
+			setWhiteTally((prevTally) => [...prevTally, piece.piece])
 		} else {
-			setBlackTally((prevTally) => [...prevTally, piece])
+			setBlackTally((prevTally) => [...prevTally, piece.piece])
 		}
 	}
 	const handleSquareClick = (row, col) => {
@@ -88,8 +93,8 @@ export default function Board() {
 		const fromSquare = board[fromPos.row][fromPos.col]
 		const toSquare = board[toPos.row][toPos.col]
 
-		console.log(fromSquare.piece, fromPos.row, fromPos.col)
-		console.log(toSquare.piece, toPos.row, toPos.col)
+		// console.log("from:", fromSquare.piece, fromPos.row, fromPos.col)
+		// console.log("to:", toSquare.piece, toPos.row, toPos.col)
 		if (
 			(isWhiteTurn && fromSquare.color === "black") ||
 			(!isWhiteTurn && fromSquare.color === "white")
@@ -123,8 +128,6 @@ export default function Board() {
 
 		const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
 		if (isKingChecked(newBoard, king.row, king.col)) {
-			console.log("CHECKED")
-
 			if (fromSquare.piece !== "k") return false
 
 			if (fromSquare.color === "white") {
@@ -152,6 +155,7 @@ export default function Board() {
 		const oppKingPos = fromSquare.color === "white" ? blackKing.current : whiteKing.current
 		const oppKingColor = fromSquare.color === "white" ? "black" : "white"
 
+		// TODO render game over
 		isCheckMate(newBoard, oppKingPos, oppKingColor)
 
 		return true
@@ -177,6 +181,7 @@ export default function Board() {
 				))}
 			</div>
 			<GameInfo turn={isWhiteTurn} whiteTally={whiteTally} blackTally={blackTally} />
+			{isGameOver ? <GameOver /> : null}
 
 			{promotionSquare != null ? (
 				<PromotionChoices
