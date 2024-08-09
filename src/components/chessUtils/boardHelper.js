@@ -62,13 +62,23 @@ export function tryMove(board, fromPos, toPos, piece, color) {
 	return newBoard
 }
 
-export function isCheckMate(board, kingPos, kingColor) {
+const GAME_STATUS = {
+	CHECKMATE: "checkmate",
+	STALEMATE: "stalemate",
+	NOT_CHECKMATE: false
+}
+
+export function getMate(board, kingPos, kingColor) {
 	// console.log(kingPos)
 	// console.log(board)
-	if (!isKingChecked(board, kingPos.row, kingPos.col)) return false
-	console.log("First CHECK")
 
-	return !canPieceBlock(board, kingPos, kingColor) && !canKingMove(board, kingPos, kingColor)
+	if (canPieceBlock(board, kingPos, kingColor) || canKingMove(board, kingPos, kingColor)) {
+		return GAME_STATUS.NOT_CHECKMATE
+	}
+
+	if (!isKingChecked(board, kingPos.row, kingPos.col)) return GAME_STATUS.STALEMATE
+
+	return GAME_STATUS.CHECKMATE
 }
 export function isKingChecked(board, kingRow, kingCol) {
 	const king = board[kingRow][kingCol]
