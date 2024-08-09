@@ -8,7 +8,7 @@
     */
 
 // TODO seperate into own files by piece
-export function copyBoard(board, fromPos, toPos, piece, color) {
+export function tryMove(board, fromPos, toPos, piece, color) {
 	const newBoard = board.map((r) => r.map((square) => ({ ...square })))
 
 	newBoard[toPos.row][toPos.col] = {
@@ -71,7 +71,7 @@ function canKingMove(board, kingPos, kingColor) {
 			)
 				continue
 
-			const newBoard = copyBoard(board, kingPos, { row: newRow, col: newCol }, "k", kingColor)
+			const newBoard = tryMove(board, kingPos, { row: newRow, col: newCol }, "k", kingColor)
 			if (!isKingChecked(newBoard, newRow, newCol)) {
 				console.log("CAN MOVE")
 				return true
@@ -118,7 +118,7 @@ function canPawnBlock(board, fromSquare, kingPos) {
 		toPos.col = fromPos.col + c
 		if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) continue
 		if (validatePawnMove(board, fromPos, toPos)) {
-			const newBoard = copyBoard(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
+			const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 
 			if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
 				console.log("Pawn Block: ", fromPos)
@@ -151,7 +151,7 @@ function canOrthogonalBlock(board, fromSquare, kingPos) {
 
 			if (!validateOrthogonalMove(board, fromPos, toPos)) break
 
-			const newBoard = copyBoard(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
+			const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 
 			if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
 				console.log("Orthogonal Block: ", fromPos)
@@ -181,13 +181,7 @@ function canDiagonalBlock(board, fromSquare, kingPos) {
 
 				if (!validateDiagonalMove(board, fromPos, toPos)) break
 
-				const newBoard = copyBoard(
-					board,
-					fromPos,
-					toPos,
-					fromSquare.piece,
-					fromSquare.color
-				)
+				const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 
 				if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
 					console.log("Diagonal Block: ", fromPos)
@@ -226,13 +220,7 @@ function canKnightBlock(board, fromSquare, kingPos) {
 			if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) continue
 
 			if (validateKnightMove(board, fromPos, toPos)) {
-				const newBoard = copyBoard(
-					board,
-					fromPos,
-					toPos,
-					fromSquare.piece,
-					fromSquare.color
-				)
+				const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 
 				if (!isKingChecked(newBoard, kingPos.row, kingPos.col)) {
 					console.log("Knight Block: ", fromPos)

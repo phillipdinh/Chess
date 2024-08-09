@@ -4,14 +4,12 @@ import Square from "./square"
 import GameInfo from "./gameInfo"
 import GameOver from "./gameOver"
 import PromotionChoices from "./promotionChoices"
-import { isCheckMate, isKingChecked, validateMove } from "./chessUtils/boardHelper"
+import { isCheckMate, isKingChecked, validateMove, tryMove } from "./chessUtils/boardHelper"
 
 import "../styles.css"
 
 export default function Board() {
 	/* TODO 
-    - Add game over banner
-    - Drag
     - Use global state providers
     - If no possible moves set badSelect
     - Create getKingFunction
@@ -20,7 +18,6 @@ export default function Board() {
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
-	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
 	const [whiteTally, setWhiteTally] = useState([])
 	const [blackTally, setBlackTally] = useState([])
 	const [promotionSquare, setPromotionSquare] = useState(null)
@@ -28,6 +25,8 @@ export default function Board() {
 
 	const whiteKing = useRef({ row: 7, col: 4 })
 	const blackKing = useRef({ row: 0, col: 4 })
+	//TODO make useRef
+	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
 
 	const setBoardPiece = (row, col, attr, val) => {
 		setChessBoard((prevBoard) => {
@@ -43,6 +42,7 @@ export default function Board() {
 			setBlackTally((prevTally) => [...prevTally, piece.piece])
 		}
 	}
+	//TODO integrate onDrag
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = chessBoard[row][col]
 		if (selectedPiece) {
@@ -112,20 +112,10 @@ export default function Board() {
 			}
 		}
 
-		// Only set chessBoard to newBoard if King is not checked
-		const newBoard = board.map((row) => row.map((square) => ({ ...square })))
-		newBoard[toPos.row][toPos.col] = {
-			...newBoard[toPos.row][toPos.col],
-			piece: fromSquare.piece,
-			color: fromSquare.color
-		}
-		newBoard[fromPos.row][fromPos.col] = {
-			...newBoard[fromPos.row][fromPos.col],
-			piece: null,
-			color: null,
-			selected: false
-		}
+		const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
+		newBoard[fromPos.row][fromPos.col].selected = false
 
+		// Only set chessBoard to newBoard if King is not checked
 		const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
 		if (isKingChecked(newBoard, king.row, king.col)) {
 			if (fromSquare.piece !== "k") return false
@@ -149,19 +139,24 @@ export default function Board() {
 
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 		setChessBoard(newBoard)
+
+		//TODO Choose promotion before other team can move. (cover screen)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
 
 		// TODO optimize
 		const oppKingPos = fromSquare.color === "white" ? blackKing.current : whiteKing.current
 		const oppKingColor = fromSquare.color === "white" ? "black" : "white"
 
-		// TODO render game over
-		isCheckMate(newBoard, oppKingPos, oppKingColor)
+		//TODO check for checkmate after promotion
+
+		if (isCheckMate(newBoard, oppKingPos, oppKingColor)) {
+			setIsGameOver(true)
+		}
 
 		return true
 	}
 	return (
-		<>
+		<div className="page">
 			<div className="board">
 				{chessBoard.map((row, rowIndex) => (
 					<div key={rowIndex} className="board-row">
@@ -189,7 +184,7 @@ export default function Board() {
 					onClick={handlePromotionClick}
 				></PromotionChoices>
 			) : null}
-		</>
+		</div>
 	)
 }
 
