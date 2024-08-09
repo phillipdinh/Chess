@@ -43,6 +43,12 @@ export default function Board() {
 			setBlackTally((prevTally) => [...prevTally, piece.piece])
 		}
 	}
+	const pawnPromotion = (square) => {
+		if (square.piece !== "p") return
+		if (square.color === "black" && square.row !== 7) return
+		if (square.color === "white" && square.row !== 0) return
+		setPromotionSquare(square)
+	}
 	//TODO integrate onDrag
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = chessBoard[row][col]
@@ -105,12 +111,6 @@ export default function Board() {
 		blackKing.current = { row: 0, col: 4 }
 		setIsGameOver(false)
 	}
-	const pawnPromotion = (square) => {
-		if (square.piece !== "p") return
-		if (square.color === "black" && square.row !== 7) return
-		if (square.color === "white" && square.row !== 0) return
-		setPromotionSquare(square)
-	}
 	const movePiece = (board, fromPos, toPos) => {
 		const fromSquare = board[fromPos.row][fromPos.col]
 		const toSquare = board[toPos.row][toPos.col]
@@ -126,11 +126,9 @@ export default function Board() {
 
 		if (fromSquare.piece === "k") {
 			if (fromSquare.color === "white") {
-				whiteKing.current.row = toPos.row
-				whiteKing.current.col = toPos.col
+				whiteKing.current = { ...toPos }
 			} else {
-				blackKing.current.row = toPos.row
-				blackKing.current.col = toPos.col
+				blackKing.current = { ...toPos }
 			}
 		}
 
@@ -138,16 +136,16 @@ export default function Board() {
 		newBoard[fromPos.row][fromPos.col].selected = false
 
 		// Only set chessBoard to newBoard if King is not checked
+		//const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
+
 		const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
 		if (isKingChecked(newBoard, king.row, king.col)) {
 			if (fromSquare.piece !== "k") return false
 
 			if (fromSquare.color === "white") {
-				whiteKing.current.row = fromPos.row
-				whiteKing.current.col = fromPos.col
+				whiteKing.current = { ...fromPos }
 			} else {
-				blackKing.current.row = fromPos.row
-				blackKing.current.col = fromPos.col
+				blackKing.current = { ...fromPos }
 			}
 
 			return false
@@ -163,11 +161,8 @@ export default function Board() {
 		setChessBoard(newBoard)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
 
-		// TODO function?
 		const oppKingPos = fromSquare.color === "white" ? blackKing.current : whiteKing.current
 		const oppKingColor = fromSquare.color === "white" ? "black" : "white"
-
-		//TODO check for checkmate after promotion
 
 		if (isCheckMate(newBoard, oppKingPos, oppKingColor)) {
 			setIsGameOver(true)
