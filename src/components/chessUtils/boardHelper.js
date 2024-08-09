@@ -3,9 +3,47 @@
     - Draw
         - King is not in check but has no valid moves or other pieces to move
     - Castle
+        - Check if king is moving onto a rook of same color
         - Check if rook or king has been moved
         - Make sure king is not in check after castling
     */
+const newBoardSetup = [
+	["r", "n", "b", "q", "k", "b", "n", "r"],
+	["p", "p", "p", "p", "p", "p", "p", "p"],
+	[null, null, null, null, null, null, null, null],
+	[null, null, null, null, null, null, null, null],
+	[null, null, null, null, null, null, null, null],
+	[null, null, null, null, null, null, null, null],
+	["p", "p", "p", "p", "p", "p", "p", "p"],
+	["r", "n", "b", "q", "k", "b", "n", "r"]
+]
+
+export const boardInit = () => {
+	const board = []
+	let player = null
+	for (let r = 0; r < 8; r++) {
+		const currRow = []
+		for (let c = 0; c < 8; c++) {
+			if (r < 2) {
+				player = "black"
+			} else if (r > 5) {
+				player = "white"
+			} else {
+				player = null
+			}
+			currRow.push({
+				row: r,
+				col: c,
+				piece: newBoardSetup[r][c],
+				color: player,
+				selected: false,
+				badSelect: false
+			})
+		}
+		board.push(currRow)
+	}
+	return board
+}
 export function tryMove(board, fromPos, toPos, piece, color) {
 	const newBoard = board.map((r) => r.map((square) => ({ ...square })))
 

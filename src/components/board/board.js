@@ -1,19 +1,22 @@
 import React, { useState, useRef, useEffect } from "react"
 
 import Square from "./square"
-import GameInfo from "./gameInfo"
-import PromotionChoices from "./promotionChoices"
-import { isCheckMate, isKingChecked, validateMove, tryMove } from "./chessUtils/boardHelper"
+import GameInfo from "../gameComponents/gameInfo"
+import PromotionChoices from "../gameComponents/promotionChoices"
+import {
+	boardInit,
+	isCheckMate,
+	isKingChecked,
+	validateMove,
+	tryMove
+} from "../chessUtils/boardHelper"
 
-import "../styles.css"
+import "../../styles.css"
 
 export default function Board() {
 	/* TODO 
     - Use global state providers
-    - If no possible moves set badSelect
-    - Create getKingFunction
     - Try to reorganize states
-    - Choose font
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -21,12 +24,12 @@ export default function Board() {
 	const [blackTally, setBlackTally] = useState([])
 	const [promotionSquare, setPromotionSquare] = useState(null)
 	const [isGameOver, setIsGameOver] = useState(false)
-
 	const [promotionColor, setPromotionColor] = useState(null)
 
 	const whiteKing = useRef({ row: 7, col: 4 })
 	const blackKing = useRef({ row: 0, col: 4 })
 
+	// TODO useRef? Doesn't need re-render
 	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
 
 	const setBoardPiece = (row, col, attr, val) => {
@@ -136,7 +139,6 @@ export default function Board() {
 		newBoard[fromPos.row][fromPos.col].selected = false
 
 		// Only set chessBoard to newBoard if King is not checked
-		//const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
 
 		const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
 		if (isKingChecked(newBoard, king.row, king.col)) {
@@ -147,9 +149,9 @@ export default function Board() {
 			} else {
 				blackKing.current = { ...fromPos }
 			}
-
 			return false
 		}
+
 		if (
 			(isWhiteTurn && toSquare.color === "black") ||
 			(!isWhiteTurn && toSquare.color === "white")
@@ -206,41 +208,4 @@ export default function Board() {
 			) : null}
 		</div>
 	)
-}
-
-const newBoardSetup = [
-	["r", "n", "b", "q", "k", "b", "n", "r"],
-	["p", "p", "p", "p", "p", "p", "p", "p"],
-	[null, null, null, null, null, null, null, null],
-	[null, null, null, null, null, null, null, null],
-	[null, null, null, null, null, null, null, null],
-	[null, null, null, null, null, null, null, null],
-	["p", "p", "p", "p", "p", "p", "p", "p"],
-	["r", "n", "b", "q", "k", "b", "n", "r"]
-]
-const boardInit = () => {
-	const board = []
-	let player = null
-	for (let r = 0; r < 8; r++) {
-		const currRow = []
-		for (let c = 0; c < 8; c++) {
-			if (r < 2) {
-				player = "black"
-			} else if (r > 5) {
-				player = "white"
-			} else {
-				player = null
-			}
-			currRow.push({
-				row: r,
-				col: c,
-				piece: newBoardSetup[r][c],
-				color: player,
-				selected: false,
-				badSelect: false
-			})
-		}
-		board.push(currRow)
-	}
-	return board
 }
