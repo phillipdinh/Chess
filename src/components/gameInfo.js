@@ -1,5 +1,7 @@
-import React, { useState } from "react"
+import React from "react"
 export default function GameInfo(props) {
+	//TODO add css
+	// unique color for tally label
 	const pieces = {
 		k: "♔",
 		q: "♕",
@@ -10,24 +12,26 @@ export default function GameInfo(props) {
 	}
 	return (
 		<div className="game-info">
-			<div>Turn: {props.turn ? "White" : "Black"} </div>
-			<div className="captured-pieces">
-				White Tally:
-				{props.whiteTally.map((square, index) => (
-					<div key={index} className={square.color}>
-						{pieces[square.piece]}
-					</div>
-				))}
+			<div className="info-container">
+				<p className="black info-label">Black Tally</p>
+				<div className="white captured-container">
+					{props.blackTally.map((piece, index) => (
+						<div key={index} className="white captured-pieces">
+							{pieces[piece]}
+						</div>
+					))}
+				</div>
 			</div>
-			<div className="captured-pieces">
-				Black Tally:
-				{props.blackTally.map((square, index) => (
-					<div key={index} className={square.color}>
-						{pieces[square.piece]}
-					</div>
-				))}
+			<div className="info-container">
+				<div className="black captured-container">
+					{props.whiteTally.map((piece, index) => (
+						<div key={index} className="black captured-pieces">
+							{pieces[piece]}
+						</div>
+					))}
+				</div>
+				<p className="white info-label">White Tally</p>
 			</div>
-			{props.badMove ? <div>Bad</div> : null}
 		</div>
 	)
 }
