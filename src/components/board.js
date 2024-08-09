@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 
 import Square from "./square"
 import GameInfo from "./gameInfo"
@@ -12,10 +12,8 @@ export default function Board() {
     - Use global state providers
     - If no possible moves set badSelect
     - Create getKingFunction
-    - Put game over in game info
     - Try to reorganize states
     - Choose font
-    - Play again
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -24,9 +22,11 @@ export default function Board() {
 	const [promotionSquare, setPromotionSquare] = useState(null)
 	const [isGameOver, setIsGameOver] = useState(false)
 
+	const [promotionColor, setPromotionColor] = useState(null)
+
 	const whiteKing = useRef({ row: 7, col: 4 })
 	const blackKing = useRef({ row: 0, col: 4 })
-	//TODO make useRef
+
 	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
 
 	const setBoardPiece = (row, col, attr, val) => {
@@ -76,7 +76,22 @@ export default function Board() {
 		setBoardPiece(row, col, "piece", piece)
 		setBoardPiece(row, col, "color", color)
 		setPromotionSquare(null)
+		setPromotionColor(color)
 	}
+	useEffect(() => {
+		if (promotionColor) {
+			const newBoard = chessBoard.map((r) => r.map((square) => ({ ...square })))
+
+			const oppKingPos = promotionColor === "white" ? blackKing.current : whiteKing.current
+			const oppKingColor = promotionColor === "white" ? "black" : "white"
+
+			if (isCheckMate(newBoard, oppKingPos, oppKingColor)) {
+				setIsGameOver(true)
+			}
+		}
+		setPromotionColor(false)
+	}, [promotionColor])
+
 	const handleBadSelection = (row, col) => {
 		setBoardPiece(row, col, "badSelect", true)
 
@@ -148,7 +163,7 @@ export default function Board() {
 		setChessBoard(newBoard)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
 
-		// TODO optimize
+		// TODO function?
 		const oppKingPos = fromSquare.color === "white" ? blackKing.current : whiteKing.current
 		const oppKingColor = fromSquare.color === "white" ? "black" : "white"
 
