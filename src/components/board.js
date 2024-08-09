@@ -15,6 +15,8 @@ export default function Board() {
     - Create getKingFunction
     - SetGameOver and pass down winner info
     - Try to reorganize states
+    - Choose font
+    - Play again
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -139,8 +141,6 @@ export default function Board() {
 
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 		setChessBoard(newBoard)
-
-		//TODO Choose promotion before other team can move. (cover screen)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
 
 		// TODO optimize
@@ -174,9 +174,9 @@ export default function Board() {
 						))}
 					</div>
 				))}
+				{isGameOver ? <GameOver /> : null}
 			</div>
 			<GameInfo turn={isWhiteTurn} whiteTally={whiteTally} blackTally={blackTally} />
-			{isGameOver ? <GameOver /> : null}
 
 			{promotionSquare != null ? (
 				<PromotionChoices
