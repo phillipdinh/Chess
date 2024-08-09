@@ -1,22 +1,20 @@
-import Piece from "./piece"
-
 export default function Square(props) {
 	const id = `sq-${props.col}-${props.row}`
 
-	const renderPiece = (piece, color) => {
+	const renderPiece = (piece) => {
 		switch (piece) {
 			case "k":
-				return <Piece color={color} icon="♔" />
+				return "♔"
 			case "q":
-				return <Piece color={color} icon="♕" />
+				return "♕"
 			case "r":
-				return <Piece color={color} icon="♖" />
+				return "♖"
 			case "b":
-				return <Piece color={color} icon="♗" />
+				return "♗"
 			case "n":
-				return <Piece color={color} icon="♞" />
+				return "♞"
 			case "p":
-				return <Piece color={color} icon="♙" />
+				return "♙"
 			default:
 				return null // No piece
 		}
@@ -39,7 +37,7 @@ export default function Square(props) {
 		>
 			{showRow ? <span className="board-label row-label">{`${props.row}`}</span> : null}
 			{showCol ? <span className="board-label col-label">{`${props.col}`}</span> : null}
-			{renderPiece(props.piece, props.color)}
+			{<div className={props.color}>{renderPiece(props.piece)}</div>}
 		</div>
 	)
 }
