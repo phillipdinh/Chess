@@ -35,9 +35,9 @@ export default function Square(props) {
 			}`}
 			onClick={props.onClick}
 		>
-			{showRow ? <span className="board-label row-label">{`${props.row}`}</span> : null}
-			{showCol ? <span className="board-label col-label">{`${props.col}`}</span> : null}
-			{<div className={props.color}>{renderPiece(props.piece)}</div>}
+			{showRow ? <span className="board-label row-label">{props.row}</span> : null}
+			{showCol ? <span className="board-label col-label">{props.col}</span> : null}
+			{<div className={`piece ${props.color}`}>{renderPiece(props.piece)}</div>}
 		</div>
 	)
 }
