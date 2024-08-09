@@ -3,13 +3,7 @@ import React, { useState, useRef, useEffect } from "react"
 import Square from "./square"
 import GameInfo from "../gameComponents/gameInfo"
 import PromotionChoices from "../gameComponents/promotionChoices"
-import {
-	boardInit,
-	isCheckMate,
-	isKingChecked,
-	validateMove,
-	tryMove
-} from "../chessUtils/boardHelper"
+import { boardInit, getMate, isKingChecked, validateMove, tryMove } from "../chessUtils/boardHelper"
 
 import "../../styles.css"
 
@@ -24,6 +18,7 @@ export default function Board() {
 	const [blackTally, setBlackTally] = useState([])
 	const [promotionSquare, setPromotionSquare] = useState(null)
 	const [isGameOver, setIsGameOver] = useState(false)
+	const [mateStatus, setMateStatus] = useState(false)
 	const [promotionColor, setPromotionColor] = useState(null)
 
 	const whiteKing = useRef({ row: 7, col: 4 })
@@ -94,8 +89,11 @@ export default function Board() {
 			const oppKingPos = promotionColor === "white" ? blackKing.current : whiteKing.current
 			const oppKingColor = promotionColor === "white" ? "black" : "white"
 
-			if (isCheckMate(newBoard, oppKingPos, oppKingColor)) {
+			const mateStatus = getMate(newBoard, oppKingPos, oppKingColor)
+
+			if (mateStatus === "checkmate" || mateStatus === "stalemate") {
 				setIsGameOver(true)
+				setMateStatus(mateStatus)
 			}
 		}
 		setPromotionColor(false)
@@ -113,6 +111,7 @@ export default function Board() {
 		whiteKing.current = { row: 7, col: 4 }
 		blackKing.current = { row: 0, col: 4 }
 		setIsGameOver(false)
+		setMateStatus(false)
 	}
 	const movePiece = (board, fromPos, toPos) => {
 		const fromSquare = board[fromPos.row][fromPos.col]
@@ -166,8 +165,12 @@ export default function Board() {
 		const oppKingPos = fromSquare.color === "white" ? blackKing.current : whiteKing.current
 		const oppKingColor = fromSquare.color === "white" ? "black" : "white"
 
-		if (isCheckMate(newBoard, oppKingPos, oppKingColor)) {
+		const mateStatus = getMate(newBoard, oppKingPos, oppKingColor)
+
+		if (mateStatus === "checkmate" || mateStatus === "stalemate") {
+			console.log(mateStatus)
 			setIsGameOver(true)
+			setMateStatus(mateStatus)
 		}
 
 		return true
@@ -197,6 +200,7 @@ export default function Board() {
 				whiteTally={whiteTally}
 				blackTally={blackTally}
 				isGameOver={isGameOver}
+				mateStatus={mateStatus}
 				handlePlayAgain={handlePlayAgainBtn}
 			/>
 
