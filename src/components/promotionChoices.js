@@ -6,8 +6,8 @@ export default function PromotionChoices(props) {
 		props.onClick(square.row, square.col, choice, square.color)
 	}
 	const styles = {
-		left: `${props.square.col * 64}px`,
-		top: `${props.square.row * 64}px`
+		left: `${props.square.col * 80 + 32}px`,
+		top: `${props.square.row * 80 + 32}px`
 	}
 	return (
 		<div className="pawn-promotion" style={styles}>
