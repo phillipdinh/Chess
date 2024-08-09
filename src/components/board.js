@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react"
 
 import Square from "./square"
 import GameInfo from "./gameInfo"
-import GameOver from "./gameOver"
 import PromotionChoices from "./promotionChoices"
 import { isCheckMate, isKingChecked, validateMove, tryMove } from "./chessUtils/boardHelper"
 
@@ -13,7 +12,7 @@ export default function Board() {
     - Use global state providers
     - If no possible moves set badSelect
     - Create getKingFunction
-    - SetGameOver and pass down winner info
+    - Put game over in game info
     - Try to reorganize states
     - Choose font
     - Play again
@@ -84,6 +83,12 @@ export default function Board() {
 		setTimeout(() => {
 			setBoardPiece(row, col, "badSelect", false)
 		}, 200)
+	}
+	const handlePlayAgainBtn = () => {
+		setChessBoard(boardInit())
+		whiteKing.current = { row: 7, col: 4 }
+		blackKing.current = { row: 0, col: 4 }
+		setIsGameOver(false)
 	}
 	const pawnPromotion = (square) => {
 		if (square.piece !== "p") return
@@ -174,9 +179,14 @@ export default function Board() {
 						))}
 					</div>
 				))}
-				{isGameOver ? <GameOver /> : null}
 			</div>
-			<GameInfo turn={isWhiteTurn} whiteTally={whiteTally} blackTally={blackTally} />
+			<GameInfo
+				turn={isWhiteTurn}
+				whiteTally={whiteTally}
+				blackTally={blackTally}
+				isGameOver={isGameOver}
+				handlePlayAgain={handlePlayAgainBtn}
+			/>
 
 			{promotionSquare != null ? (
 				<PromotionChoices

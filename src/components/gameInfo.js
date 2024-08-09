@@ -1,4 +1,6 @@
 import React from "react"
+import GameOver from "./gameOver"
+
 export default function GameInfo(props) {
 	const pieces = {
 		k: "♔",
@@ -20,6 +22,7 @@ export default function GameInfo(props) {
 					))}
 				</div>
 			</div>
+			{props.isGameOver ? <GameOver handlePlayAgain={props.handlePlayAgain} /> : null}
 			<div className="info-container">
 				<div className="black captured-container">
 					{props.whiteTally.map((piece, index) => (
