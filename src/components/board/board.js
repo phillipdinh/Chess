@@ -37,9 +37,7 @@ export default function Board() {
 
 	const whiteKing = useRef({ row: 7, col: 4 })
 	const blackKing = useRef({ row: 0, col: 4 })
-
-	// TODO useRef? Doesn't need re-render
-	const [isWhiteTurn, setIsWhiteTurn] = useState(true)
+	const isWhiteTurn = useRef(true)
 
 	const setBoardPiece = (row, col, attr, val) => {
 		setChessBoard((prevBoard) => {
@@ -77,7 +75,7 @@ export default function Board() {
 			if (castleBoard) {
 				castleBoard[fromPos.row][fromPos.col].selected = false
 				setChessBoard(castleBoard)
-				setIsWhiteTurn((prevTurn) => !prevTurn)
+				isWhiteTurn.current = !isWhiteTurn.current
 
 				setKingPos(toPos, castleBoard[toPos.row][toPos.col].color)
 			} else {
@@ -96,8 +94,8 @@ export default function Board() {
 		}
 		// Valid piece selection
 		else if (
-			(clickedSquare.color === "white" && isWhiteTurn) ||
-			(clickedSquare.color === "black" && !isWhiteTurn)
+			(clickedSquare.color === "white" && isWhiteTurn.current) ||
+			(clickedSquare.color === "black" && !isWhiteTurn.current)
 		) {
 			setSelectedPiece(clickedSquare)
 			setBoardPiece(row, col, "selected", true)
@@ -143,7 +141,7 @@ export default function Board() {
 		setMateStatus(false)
 		setWhiteTally([])
 		setBlackTally([])
-		setIsWhiteTurn(true)
+		isWhiteTurn.current = true
 	}
 	function setCastlePiecesMoved(pos) {
 		if (pos.row === 0) {
@@ -191,8 +189,8 @@ export default function Board() {
 		console.log("to:", toSquare.piece, toPos.row, toPos.col)
 
 		if (
-			(isWhiteTurn && fromSquare.color === "black") ||
-			(!isWhiteTurn && fromSquare.color === "white")
+			(isWhiteTurn.current && fromSquare.color === "black") ||
+			(!isWhiteTurn.current && fromSquare.color === "white")
 		) {
 			return false
 		}
@@ -214,14 +212,14 @@ export default function Board() {
 		}
 
 		if (
-			(isWhiteTurn && toSquare.color === "black") ||
-			(!isWhiteTurn && toSquare.color === "white")
+			(isWhiteTurn.current && toSquare.color === "black") ||
+			(!isWhiteTurn.current && toSquare.color === "white")
 		) {
 			capturePiece(toSquare)
 		}
 
 		// Modularize
-		setIsWhiteTurn((prevTurn) => !prevTurn)
+		isWhiteTurn.current = !isWhiteTurn.current
 		setChessBoard(newBoard)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
 
@@ -239,7 +237,7 @@ export default function Board() {
 		return true
 	}
 	function endMove(board, color) {
-		setIsWhiteTurn((prevTurn) => !prevTurn)
+		isWhiteTurn.current = !isWhiteTurn.current
 		setChessBoard(board)
 
 		const oppKingPos = color === "white" ? blackKing.current : whiteKing.current
@@ -274,7 +272,6 @@ export default function Board() {
 				))}
 			</div>
 			<GameInfo
-				turn={isWhiteTurn}
 				whiteTally={whiteTally}
 				blackTally={blackTally}
 				isGameOver={isGameOver}
