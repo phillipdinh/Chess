@@ -29,11 +29,11 @@ export default function Board() {
 	const [mateStatus, setMateStatus] = useState(false)
 	const [promotionColor, setPromotionColor] = useState(null)
 
-	/* [r,k,r,k]
-    - white 0,1
-    - black 2,3
+	/* [r,k,r,r,k,r]
+    - white 0,1,2
+    - black 3,4,5
     */
-	const [pieceMoved, setPieceMoved] = useState([false, false, false, false])
+	const [castlePieces, setCastlePieces] = useState(Array(6).fill(false))
 
 	const whiteKing = useRef({ row: 7, col: 4 })
 	const blackKing = useRef({ row: 0, col: 4 })
@@ -73,21 +73,17 @@ export default function Board() {
 
 			// TODO unnest and handleBadSelection in castle
 
-			const castleBoard = canCastle(chessBoard, fromPos, toPos, pieceMoved)
+			const castleBoard = canCastle(chessBoard, fromPos, toPos, castlePieces)
 			if (castleBoard) {
-				// TODO Modularize
 				castleBoard[fromPos.row][fromPos.col].selected = false
 				setChessBoard(castleBoard)
 				setIsWhiteTurn((prevTurn) => !prevTurn)
 
-				if (castleBoard[toPos.row][toPos.col].color === "white") {
-					whiteKing.current = { ...toPos }
-				} else {
-					blackKing.current = { ...toPos }
-				}
+				setKingPos(toPos, castleBoard[toPos.row][toPos.col].color)
 			} else {
-				const isValidMove = validateMove(chessBoard, fromPos, toPos, pieceMoved)
+				const isValidMove = validateMove(chessBoard, fromPos, toPos)
 
+				//FIXME nothing in if statement
 				if (isValidMove && movePiece(chessBoard, fromPos, toPos)) {
 				} else {
 					handleBadSelection(fromPos.row, fromPos.col)
@@ -149,12 +145,51 @@ export default function Board() {
 		setBlackTally([])
 		setIsWhiteTurn(true)
 	}
+	function setCastlePiecesMoved(pos) {
+		if (pos.row === 0) {
+			switch (pos.col) {
+				case 0:
+					break
+
+				case 4:
+					break
+
+				case 7:
+					break
+
+				default:
+					return
+			}
+		} else if (pos.row === 7) {
+			switch (pos.col) {
+				case 0:
+					break
+
+				case 4:
+					break
+
+				case 7:
+					break
+
+				default:
+					return
+			}
+		}
+	}
+	function setKingPos(pos, color) {
+		if (color === "white") {
+			whiteKing.current = { ...pos }
+		} else {
+			blackKing.current = { ...pos }
+		}
+	}
 	const movePiece = (board, fromPos, toPos) => {
 		const fromSquare = board[fromPos.row][fromPos.col]
 		const toSquare = board[toPos.row][toPos.col]
 
 		console.log("from:", fromSquare.piece, fromPos.row, fromPos.col)
 		console.log("to:", toSquare.piece, toPos.row, toPos.col)
+
 		if (
 			(isWhiteTurn && fromSquare.color === "black") ||
 			(!isWhiteTurn && fromSquare.color === "white")
@@ -162,14 +197,8 @@ export default function Board() {
 			return false
 		}
 
-		console.log("is turn check")
-		// TODO modularize
 		if (fromSquare.piece === "k") {
-			if (fromSquare.color === "white") {
-				whiteKing.current = { ...toPos }
-			} else {
-				blackKing.current = { ...toPos }
-			}
+			setKingPos(toPos, fromSquare.color)
 		}
 
 		const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
@@ -180,16 +209,10 @@ export default function Board() {
 		const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
 		if (isKingChecked(newBoard, king.row, king.col)) {
 			if (fromSquare.piece !== "k") return false
-
-			if (fromSquare.color === "white") {
-				whiteKing.current = { ...fromPos }
-			} else {
-				blackKing.current = { ...fromPos }
-			}
+			setKingPos(fromPos, fromSquare.color)
 			return false
 		}
 
-		console.log("after is King checked")
 		if (
 			(isWhiteTurn && toSquare.color === "black") ||
 			(!isWhiteTurn && toSquare.color === "white")
