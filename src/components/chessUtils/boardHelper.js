@@ -1,9 +1,16 @@
-const GAME_STATUS = {
-	CHECKMATE: "checkmate",
-	STALEMATE: "stalemate",
-	NOT_CHECKMATE: false
-}
-
+/**
+ * Initial setup for a chessboard represented as a 2D array.
+ * Each inner array corresponds to a row on the chessboard.
+ *
+ * String elements represent chess pieces:
+ * - "r" : Rook
+ * - "n" : Knight
+ * - "b" : Bishop
+ * - "q" : Queen
+ * - "k" : King
+ * - "p" : Pawn
+ * @type {Array<Array<string|null>>}
+ */
 const newBoardSetup = [
 	["r", "n", "b", "q", "k", "b", "n", "r"],
 	["p", "p", "p", "p", "p", "p", "p", "p"],
@@ -15,6 +22,20 @@ const newBoardSetup = [
 	["r", "n", "b", "q", "k", "b", "n", "r"]
 ]
 
+/**
+ * Initializes a new chessboard as a 2D array.
+ * Row 0,1 is 'Black's pieces and Row 6,7 is 'White's pieces
+ *
+ * Each square on the board is represented as an object with properties:
+ * - {number} row: Row index of the square.
+ * - {number} col: Column index of the square.
+ * - {string} piece: Type of piece on the square, based on the initial setup.
+ * - {string} color: The color of the piece, either "black", "white", or null if empty.
+ * - {boolean} selected: A boolean indicating if the square is currently selected.
+ * - {boolean} badSelect: A boolean indicating if the selection was invalid.
+ *
+ * @returns {Array<Array<Object>>} - A 2D array representing the chessboard.
+ */
 export const boardInit = () => {
 	const board = []
 	let player = null
@@ -42,6 +63,21 @@ export const boardInit = () => {
 	return board
 }
 
+/**
+ * Creates a copy of board state with the specified piece moved to the new position.
+ *
+ * @param {Array<Array<Object>>} board - The current state of the chessboard.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {string} piece - Type of chess piece ('p', 'r', 'n', 'b', 'q', 'k')
+ * @param {String} color - Color of chess piece ('white' or 'black')
+ *
+ * @returns {Array<Array<Object>>} - New board state with the piece moved to the target position.
+ */
 export function tryMove(board, fromPos, toPos, piece, color) {
 	const newBoard = board.map((r) => r.map((square) => ({ ...square })))
 
@@ -60,6 +96,7 @@ export function tryMove(board, fromPos, toPos, piece, color) {
 	return newBoard
 }
 
+// TODO document
 export function canCastle(board, fromPos, toPos, castlePieces) {
 	const fromSquare = board[fromPos.row][fromPos.col]
 	const color = fromSquare.color
@@ -120,6 +157,27 @@ export function canCastle(board, fromPos, toPos, castlePieces) {
 	return moveKingBoard
 }
 
+/*
+ *
+ */
+const GAME_STATUS = {
+	CHECKMATE: "checkmate",
+	STALEMATE: "stalemate",
+	NOT_CHECKMATE: false
+}
+/**
+ * Evaluates if specified king is in checkmate or stalemate.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ * @param {string} kingColor - The color of the king ('white' or 'black').
+ *
+ * @returns {string|boolean} - Returns "checkmate" if the king is in checkmate,
+ *                              "stalemate" if the king is in stalemate,
+ *                              or false if the king is not in checkmate.
+ */
 export function getMate(board, kingPos, kingColor) {
 	if (canPieceBlock(board, kingPos, kingColor) || canKingMove(board, kingPos, kingColor)) {
 		return GAME_STATUS.NOT_CHECKMATE
@@ -129,7 +187,17 @@ export function getMate(board, kingPos, kingColor) {
 
 	return GAME_STATUS.CHECKMATE
 }
-
+/**
+ * Checks if the king is in check.
+ *
+ * Iterates through entire board to determine if the king can be captured by any opposing pieces.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {number} kingRow - Row index of the king's position.
+ * @param {number} kingCol - Column index of the king's position.
+ *
+ * @returns {boolean} - Returns true if the king is in check, otherwise returns false.
+ */
 export function isKingChecked(board, kingRow, kingCol) {
 	const king = board[kingRow][kingCol]
 
@@ -146,6 +214,17 @@ export function isKingChecked(board, kingRow, kingCol) {
 	return false
 }
 
+/**
+ * Determines if the king can legally move to any adjacent square without being in check.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ * @param {string} kingColor - The color of the king ('white' or 'black').
+ *
+ * @returns {boolean} - Returns true if the king can move to at least one valid square, otherwise returns false.
+ */
 function canKingMove(board, kingPos, kingColor) {
 	for (let r = -1; r <= 1; r++) {
 		for (let c = -1; c <= 1; c++) {
@@ -166,10 +245,23 @@ function canKingMove(board, kingPos, kingColor) {
 			}
 		}
 	}
-	console.log("CHECKMATE")
 	return false
 }
 
+/**
+ * Checks if any pieces of the color as the king can block a check to the king.
+ *
+ * Iterates through entire board and checks if any of the player's pieces
+ * can move to a position to block the attack on the king.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ * @param {string} kingColor - The color of the king ('white' or 'black').
+ *
+ * @returns {boolean} - Returns true if a piece can block the check to the king, otherwise returns false.
+ */
 function canPieceBlock(board, kingPos, kingColor) {
 	for (let row of board) {
 		for (let square of row) {
@@ -198,6 +290,27 @@ function canPieceBlock(board, kingPos, kingColor) {
 	}
 }
 
+/**
+ * Determines if a pawn can block a check to the king by moving to a specified position.
+ *
+ * Checks if the pawn can move to an adjacent square in front of it
+ * (either diagonally or straight ahead) and if that move would prevent the king
+ * from being in check. The pawn's direction of movement is determined by its color.
+ *
+ *
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromSquare - Square object representing the pawn that is attempting to block.
+ *  - {number} row - Row index of the pawn's current position.
+ *  - {number} col - Column index of the pawn's current position.
+ *  - {string} piece - Type of chess piece ('p')
+ *  - {String} color - Color of chess piece ('white' or 'black')
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ *
+ * @returns {boolean} - Returns true if the pawn can move to block the king from being checked, otherwise returns false.
+ */
 //TODO enpassant and double block
 function canPawnBlock(board, fromSquare, kingPos) {
 	const direction = fromSquare.color === "white" ? -1 : 1
@@ -221,6 +334,25 @@ function canPawnBlock(board, fromSquare, kingPos) {
 	return false
 }
 
+/**
+ * Determines if a piece can block a check to the king by moving orthogonally
+ * (horizontally or vertically)
+ *
+ * Checks all possible orthogonal directions from the piece's current position and
+ * if the piece can move to a position that prevents the king from being in check.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromSquare - Square object representing the piece that is attempting to block.
+ *  - {number} row - Row index of the piece's current position.
+ *  - {number} col - Column index of the piece's current position.
+ *  - {string} piece - Type of chess piece ('r', 'q')
+ *  - {String} color - Color of chess piece ('white' or 'black')
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ *
+ * @returns {boolean} - Returns true if the piece can move to block the king from being checked, otherwise returns false.
+ */
 function canOrthogonalBlock(board, fromSquare, kingPos) {
 	const fromPos = { row: fromSquare.row, col: fromSquare.col }
 
@@ -252,6 +384,25 @@ function canOrthogonalBlock(board, fromSquare, kingPos) {
 	}
 }
 
+/**
+ * Determines if a piece can block a check to the king by moving diagonally.
+ * (top-left, top-right, bottom-left, bottom-right)
+ *
+ * Checks all possible diagonal directions from the piece's current position and
+ * if the piece can move to a position that prevents the king from being in check.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromSquare - Square object representing the piece that is attempting to block.
+ *  - {number} row - Row index of the piece's current position.
+ *  - {number} col - Column index of the piece's current position.
+ *  - {string} piece - Type of chess piece ('r', 'q')
+ *  - {String} color - Color of chess piece ('white' or 'black')
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ *
+ * @returns {boolean} - Returns true if the piece can move to block the king from being checked, otherwise returns false.
+ */
 function canDiagonalBlock(board, fromSquare, kingPos) {
 	const fromPos = { row: fromSquare.row, col: fromSquare.col }
 
@@ -284,6 +435,24 @@ function canDiagonalBlock(board, fromSquare, kingPos) {
 	return false
 }
 
+/**
+ * Determines if a queen can block a check to the king by moving diagonally or orthogonally.
+ *
+ * Checks all possible diagonal and orthogonal moves of the queen and
+ * if the queen can move to a position that prevents the king from being in check.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromSquare - Square object representing the queen that is attempting to block.
+ *  - {number} row - Row index of the queen's current position.
+ *  - {number} col - Column index of the queen's current position.
+ *  - {string} piece - Type of chess piece ('q')
+ *  - {String} color - Color of chess piece ('white' or 'black')
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ *
+ * @returns {boolean} - Returns true if the piece can move to block the king from being checked, otherwise returns false.
+ */
 function canQueenBlock(board, fromSquare, kingPos) {
 	return (
 		canDiagonalBlock(board, fromSquare, kingPos) ||
@@ -291,14 +460,68 @@ function canQueenBlock(board, fromSquare, kingPos) {
 	)
 }
 
+/**
+ * Determines if a rook can block a check to the king by moving orthogonally.
+ *
+ * Checks all possible orthogonal moves of the rook and
+ * if the rook can move to a position that prevents the king from being in check.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromSquare - Square object representing the rook that is attempting to block.
+ *  - {number} row - Row index of the rook's current position.
+ *  - {number} col - Column index of the rook's current position.
+ *  - {string} piece - Type of chess piece ('r')
+ *  - {String} color - Color of chess piece ('white' or 'black')
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ *
+ * @returns {boolean} - Returns true if the piece can move to block the king from being checked, otherwise returns false.
+ */
 function canRookBlock(board, fromSquare, kingPos) {
 	return canOrthogonalBlock(board, fromSquare, kingPos)
 }
 
+/**
+ * Determines if a bishop can block a check to the king by moving diagonally.
+ *
+ * Checks all possible diagonal moves of the bishop and
+ * if the bishop can move to a position that prevents the king from being in check.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromSquare - Square object representing the bishop that is attempting to block.
+ *  - {number} row - Row index of the bishop's current position.
+ *  - {number} col - Column index of the bishop's current position.
+ *  - {string} piece - Type of chess piece ('b')
+ *  - {String} color - Color of chess piece ('white' or 'black')
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ *
+ * @returns {boolean} - Returns true if the piece can move to block the king from being checked, otherwise returns false.
+ */
 function canBishopBlock(board, fromSquare, kingPos) {
 	return canDiagonalBlock(board, fromSquare, kingPos)
 }
 
+/**
+ * Determines if a knight can block a check to the king by moving to a valid knight position.
+ *
+ * Checks all possible moves of the knight and
+ * if moving to any of those positions would prevent the king from being in check.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromSquare - Square object representing the knight that is attempting to block.
+ *  - {number} row - Row index of the knight's current position.
+ *  - {number} col - Column index of the knight's current position.
+ *  - {string} piece - Type of chess piece ('n')
+ *  - {String} color - Color of chess piece ('white' or 'black')
+ * @param {Object} kingPos - Position of the king.
+ *  - {number} kingPos.row - Row index of the king's position.
+ *  - {number} kingPos.col - Column index of the king's position.
+ *
+ * @returns {boolean} - Returns true if the piece can move to block the king from being checked, otherwise returns false.
+ */
 function canKnightBlock(board, fromSquare, kingPos) {
 	const knightMoves = [
 		{ row: -2, col: -1 },
@@ -330,6 +553,22 @@ function canKnightBlock(board, fromSquare, kingPos) {
 	return false
 }
 
+/**
+ * Validates a move for a given piece on the chessboard.
+ *
+ * Checks the type of piece at the specified `fromPos` and
+ * validates whether it can move to the specified `toPos`.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ *
+ * @returns {boolean} - Returns true if the move is valid for the specified piece, otherwise returns false.
+ */
 export function validateMove(board, fromPos, toPos) {
 	switch (board[fromPos.row][fromPos.col].piece) {
 		case "p":
@@ -349,6 +588,23 @@ export function validateMove(board, fromPos, toPos) {
 	}
 }
 
+/**
+ * Validates whether a piece can move orthogonally (horizontally or vertically)
+ *
+ * Checks if a move from `fromPos` to `toPos` is valid for an orthogonal move,
+ * ensuring that the destination square is either empty or occupied by an opponent's piece,
+ * and that there are no pieces blocking the path of the move.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ *
+ * @returns {boolean} - Returns true if the orthogonal move is valid, otherwise returns false.
+ */
 function validateOrthogonalMove(board, fromPos, toPos) {
 	const fromColor = board[fromPos.row][fromPos.col].color
 	const toColor = board[toPos.row][toPos.col].color
@@ -379,6 +635,23 @@ function validateOrthogonalMove(board, fromPos, toPos) {
 	return true
 }
 
+/**
+ * Validates whether a piece can move diagonally (top-left, top-right, bottom-left, bottom-right)
+ *
+ * Checks if a move from `fromPos` to `toPos` is valid for an diagonal move,
+ * ensuring that the destination square is either empty or occupied by an opponent's piece,
+ * and that there are no pieces blocking the path of the move.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ *
+ * @returns {boolean} - Returns true if the diagonal move is valid, otherwise returns false.
+ */
 function validateDiagonalMove(board, fromPos, toPos) {
 	const fromSquare = board[fromPos.row][fromPos.col]
 	const toSquare = board[toPos.row][toPos.col]
@@ -403,6 +676,22 @@ function validateDiagonalMove(board, fromPos, toPos) {
 	return true
 }
 
+/**
+ * Validates whether a king can move from one position to another on the chessboard.
+ *
+ * Checks if the king can move to adjacent square and
+ * if the destination square is not occupied by a piece of the same color.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ *
+ * @returns {boolean} - Returns true if the king's move is valid, otherwise returns false.
+ */
 function validateKingMove(board, fromPos, toPos) {
 	if (Math.max(Math.abs(fromPos.row - toPos.row), Math.abs(fromPos.col - toPos.col)) > 1) {
 		return false
@@ -414,21 +703,82 @@ function validateKingMove(board, fromPos, toPos) {
 
 	return true
 }
-
+/**
+ * Validates whether a queen can move from one position to another on the chessboard.
+ *
+ * Checks if the move was valid diagonally and orthogonally.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ *
+ * @returns {boolean} - Returns true if the queen's move is valid, otherwise returns false.
+ */
 function validateQueenMove(board, fromPos, toPos) {
 	return (
 		validateOrthogonalMove(board, fromPos, toPos) || validateDiagonalMove(board, fromPos, toPos)
 	)
 }
 
+/**
+ * Validates whether a rook can move from one position to another on the chessboard.
+ *
+ * Checks if the move was valid orthogonally.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ *
+ * @returns {boolean} - Returns true if the rook's move is valid, otherwise returns false.
+ */
 function validateRookMove(board, fromPos, toPos) {
 	return validateOrthogonalMove(board, fromPos, toPos)
 }
 
+/**
+ * Validates whether a bishop can move from one position to another on the chessboard.
+ *
+ * Checks if the move was valid diagonally.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ *
+ * @returns {boolean} - Returns true if the rook's move is valid, otherwise returns false.
+ */
 function validateBishopMove(board, fromPos, toPos) {
 	return validateDiagonalMove(board, fromPos, toPos)
 }
 
+/**
+ * Validates whether a knight can move from one position to another on the chessboard.
+ *
+ * A knight moves in an L-shape: two squares in one direction and then one square
+ * perpendicular, or one square in one direction and then two squares perpendicular.
+ * Checks if the move is valid and ensures the knight is not moving to a square occupied by a friendly piece.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ *
+ * @returns {boolean} - Returns true if the rook's move is valid, otherwise returns false.
+ */
 function validateKnightMove(board, fromPos, toPos) {
 	const fromSquare = board[fromPos.row][fromPos.col]
 	const toSquare = board[toPos.row][toPos.col]
@@ -442,6 +792,24 @@ function validateKnightMove(board, fromPos, toPos) {
 	return false
 }
 
+/**
+ * Validates whether a pawn can move from one position to another on the chessboard.
+ *
+ * A pawn can move forward one square or two squares from its starting position,
+ * and can capture diagonally. Checks if the move is valid based on
+ * the pawn's direction and rules for moving and capturing.
+ * Note: En passant capturing is not yet implemented.
+ *
+ * @param {Array<Array<Object>>} board - The current state of a chessboard copy.
+ * @param {Object} fromPos - Current position of the piece being moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ * @param {Object} toPos - Target position where the piece will be moved.
+ *  - {number} row - Row index of board
+ *  - {number} col - Column index of board
+ *
+ * @returns {boolean} - Returns true if the rook's move is valid, otherwise returns false.
+ */
 function validatePawnMove(board, fromPos, toPos) {
 	//TODO: enpassant
 	const fromColor = board[fromPos.row][fromPos.col].color
