@@ -81,9 +81,7 @@ export default function Board() {
 			} else {
 				const isValidMove = validateMove(chessBoard, fromPos, toPos)
 
-				//FIXME nothing in if statement
-				if (isValidMove && movePiece(chessBoard, fromPos, toPos)) {
-				} else {
+				if (!isValidMove || !movePiece(chessBoard, fromPos, toPos)) {
 					handleBadSelection(fromPos.row, fromPos.col)
 					handleBadSelection(row, col)
 				}
@@ -93,10 +91,7 @@ export default function Board() {
 			console.log(chessBoard)
 		}
 		// Valid piece selection
-		else if (
-			(clickedSquare.color === "white" && isWhiteTurn.current) ||
-			(clickedSquare.color === "black" && !isWhiteTurn.current)
-		) {
+		else if (isTurn(clickedSquare.color)) {
 			setSelectedPiece(clickedSquare)
 			setBoardPiece(row, col, "selected", true)
 		} else {
@@ -174,6 +169,12 @@ export default function Board() {
 			}
 		}
 	}
+	function isTurn(color) {
+		return (
+			(color === "white" && isWhiteTurn.current) ||
+			(color === "black" && !isWhiteTurn.current)
+		)
+	}
 	function setKingPos(pos, color) {
 		if (color === "white") {
 			whiteKing.current = { ...pos }
@@ -188,10 +189,7 @@ export default function Board() {
 		console.log("from:", fromSquare.piece, fromPos.row, fromPos.col)
 		console.log("to:", toSquare.piece, toPos.row, toPos.col)
 
-		if (
-			(isWhiteTurn.current && fromSquare.color === "black") ||
-			(!isWhiteTurn.current && fromSquare.color === "white")
-		) {
+		if (!isTurn(fromSquare.color)) {
 			return false
 		}
 
@@ -211,10 +209,7 @@ export default function Board() {
 			return false
 		}
 
-		if (
-			(isWhiteTurn.current && toSquare.color === "black") ||
-			(!isWhiteTurn.current && toSquare.color === "white")
-		) {
+		if (!isTurn(toSquare.color)) {
 			capturePiece(toSquare)
 		}
 
