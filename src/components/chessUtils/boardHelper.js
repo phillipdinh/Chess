@@ -1,11 +1,10 @@
 /*
     TODO
-    - Draw
-        - King is not in check but has no valid moves or other pieces to move
-    - Castle
-        - Check if king is moving onto a rook of same color
-        - Check if rook or king has been moved
-        - Make sure king is not in check after castling
+    - Draws
+        - Dead Position
+        - Mutual Agreement
+        - Threefold Repition
+        - 50 Move rule
     */
 const newBoardSetup = [
 	["r", "n", "b", "q", "k", "b", "n", "r"],
@@ -68,6 +67,72 @@ const GAME_STATUS = {
 	NOT_CHECKMATE: false
 }
 
+/*
+- Castle
+    - Change kingPos
+    - Change board
+    - Fix queen check
+*/
+export function canCastle(board, fromPos, toPos, pieceMoved) {
+	const fromSquare = board[fromPos.row][fromPos.col]
+	const color = fromSquare.color
+
+	if (fromSquare.piece !== "k") return false
+
+	console.log("Before check")
+	if (isKingChecked(board, fromSquare.row, fromSquare.col)) return false
+
+	console.log("Before move position")
+	// Check if actually trying to castle
+	console.dir(toPos)
+	if (
+		!(
+			(toPos.row === 0 && (toPos.col === 2 || toPos.col === 6)) ||
+			(toPos.row === 7 && (toPos.col === 2 || toPos.col === 6))
+		)
+	) {
+		return false
+	}
+
+	const rookSquare = toPos.col === 2 ? board[toPos.row][0] : board[toPos.row][7]
+
+	console.log("Before rook check")
+	if (rookSquare.piece !== "r") return false
+
+	console.log("Before color check")
+	if (fromSquare.color !== rookSquare.color) return false
+
+	const startCol = Math.min(fromSquare.col, rookSquare.col) + 1
+	const endCol = Math.max(fromSquare.col, rookSquare.col)
+
+	// FIXME doesn work
+	// Check if pieces are empty between king and rook
+	for (let col = startCol; col < endCol; col++) {
+		console.log(board[toPos.row][col])
+		if (board[toPos.row][col].piece != null) return false
+	}
+
+	if (color === "white" && pieceMoved[0] && pieceMoved[1]) {
+		return false
+	} else if (color === "black" && pieceMoved[2] && pieceMoved[2]) {
+		return false
+	}
+
+	console.log("Can Castle")
+	const rookPos = { row: rookSquare.row, col: rookSquare.col }
+
+	const rookMoveCol = toPos.col === 2 ? 3 : 5
+	const rookMovePos = { row: toPos.row, col: rookMoveCol }
+
+	const moveRookBoard = tryMove(board, rookPos, rookMovePos, "r", color)
+	const moveKingBoard = tryMove(moveRookBoard, fromPos, toPos, "k", color)
+
+	console.log("After check")
+	if (isKingChecked(moveKingBoard, toPos.row, toPos.col)) return false
+
+	console.log("True")
+	return moveKingBoard
+}
 export function getMate(board, kingPos, kingColor) {
 	// console.log(kingPos)
 	// console.log(board)
@@ -81,6 +146,7 @@ export function getMate(board, kingPos, kingColor) {
 	return GAME_STATUS.CHECKMATE
 }
 export function isKingChecked(board, kingRow, kingCol) {
+	console.log(board)
 	const king = board[kingRow][kingCol]
 	for (let row of board) {
 		for (let square of row) {
@@ -94,6 +160,7 @@ export function isKingChecked(board, kingRow, kingCol) {
 					{ row: king.row, col: king.col }
 				)
 			) {
+				console.log(square, kingRow, king.color)
 				return true
 			}
 		}
