@@ -18,7 +18,6 @@ export default function Board() {
 	/* TODO 
     - Use global state providersz
     - Try to reorganize states
-
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -69,8 +68,6 @@ export default function Board() {
 
 			setBoardPiece(fromPos.row, fromPos.col, "selected", false)
 
-			// TODO unnest and handleBadSelection in castle
-
 			const castleBoard = canCastle(chessBoard, fromPos, toPos, castlePieces)
 
 			if (castleBoard) {
@@ -79,13 +76,13 @@ export default function Board() {
 				setKingPos(toPos, castleBoard[toPos.row][toPos.col].color)
 			} else {
 				const isValidMove = validateMove(chessBoard, fromPos, toPos)
+				const pieceMoved = movePiece(chessBoard, fromPos, toPos)
 
-				if (!isValidMove || !movePiece(chessBoard, fromPos, toPos)) {
+				if (!isValidMove || !pieceMoved) {
 					handleBadSelection(fromPos.row, fromPos.col)
 					handleBadSelection(row, col)
 				}
 			}
-
 			setSelectedPiece(null)
 			console.log(chessBoard)
 		}
@@ -129,13 +126,13 @@ export default function Board() {
 	}
 	const handlePlayAgainBtn = () => {
 		setChessBoard(boardInit())
+		isWhiteTurn.current = true
 		whiteKing.current = { row: 7, col: 4 }
 		blackKing.current = { row: 0, col: 4 }
 		setIsGameOver(false)
 		setMateStatus(false)
 		setWhiteTally([])
 		setBlackTally([])
-		isWhiteTurn.current = true
 	}
 	function setCastlePiecesMoved(pos) {
 		if (pos.row === 0) {
@@ -185,8 +182,8 @@ export default function Board() {
 		const fromSquare = board[fromPos.row][fromPos.col]
 		const toSquare = board[toPos.row][toPos.col]
 
-		console.log("from:", fromSquare.piece, fromPos.row, fromPos.col)
-		console.log("to:", toSquare.piece, toPos.row, toPos.col)
+		//console.log("from:", fromSquare.piece, fromPos.row, fromPos.col)
+		//console.log("to:", toSquare.piece, toPos.row, toPos.col)
 
 		if (!isTurn(fromSquare.color)) {
 			return false
