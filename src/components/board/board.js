@@ -76,9 +76,8 @@ export default function Board() {
 				setKingPos(toPos, castleBoard[toPos.row][toPos.col].color)
 			} else {
 				const isValidMove = validateMove(chessBoard, fromPos, toPos)
-				const pieceMoved = movePiece(chessBoard, fromPos, toPos)
 
-				if (!isValidMove || !pieceMoved) {
+				if (!isValidMove || !movePiece(chessBoard, fromPos, toPos)) {
 					handleBadSelection(fromPos.row, fromPos.col)
 					handleBadSelection(row, col)
 				}
