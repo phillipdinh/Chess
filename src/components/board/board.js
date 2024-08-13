@@ -72,11 +72,10 @@ export default function Board() {
 			// TODO unnest and handleBadSelection in castle
 
 			const castleBoard = canCastle(chessBoard, fromPos, toPos, castlePieces)
+
 			if (castleBoard) {
 				castleBoard[fromPos.row][fromPos.col].selected = false
-				setChessBoard(castleBoard)
-				isWhiteTurn.current = !isWhiteTurn.current
-
+				endMove(castleBoard, castleBoard[fromPos.row][fromPos.col].color)
 				setKingPos(toPos, castleBoard[toPos.row][toPos.col].color)
 			} else {
 				const isValidMove = validateMove(chessBoard, fromPos, toPos)
@@ -213,7 +212,7 @@ export default function Board() {
 		}
 
 		pawnPromotion(newBoard[toPos.row][toPos.col])
-        endMove(newBoard, fromSquare.color)
+		endMove(newBoard, fromSquare.color)
 		return true
 	}
 	function endMove(board, color) {
