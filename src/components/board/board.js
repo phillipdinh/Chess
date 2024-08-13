@@ -201,7 +201,6 @@ export default function Board() {
 		newBoard[fromPos.row][fromPos.col].selected = false
 
 		// Only set chessBoard to newBoard if King is not checked
-
 		const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
 		if (isKingChecked(newBoard, king.row, king.col)) {
 			if (fromSquare.piece !== "k") return false
@@ -213,22 +212,8 @@ export default function Board() {
 			capturePiece(toSquare)
 		}
 
-		// Modularize
-		isWhiteTurn.current = !isWhiteTurn.current
-		setChessBoard(newBoard)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
-
-		const oppKingPos = fromSquare.color === "white" ? blackKing.current : whiteKing.current
-		const oppKingColor = fromSquare.color === "white" ? "black" : "white"
-
-		const mateStatus = getMate(newBoard, oppKingPos, oppKingColor)
-
-		if (mateStatus === "checkmate" || mateStatus === "stalemate") {
-			console.log(mateStatus)
-			setIsGameOver(true)
-			setMateStatus(mateStatus)
-		}
-
+        endMove(newBoard, fromSquare.color)
 		return true
 	}
 	function endMove(board, color) {
