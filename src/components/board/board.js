@@ -36,6 +36,16 @@ export default function Board() {
 	const blackKing = useRef({ row: 0, col: 4 })
 	const isWhiteTurn = useRef(true)
 
+	/**
+	 * Copies and updates given element of chessBoard array
+	 *
+	 * @param {number} row - Row index of chessBoard
+	 * @param {number} col - Column index of chessBoard
+	 * @param {string} attr - Attribute of chessBoard element
+	 * @param {string} val - Value to set attribute of chessBoard element
+	 *
+	 * @returns {chessBoard} - Copied and updated board
+	 */
 	const setBoardPiece = (row, col, attr, val) => {
 		setChessBoard((prevBoard) => {
 			const newBoard = prevBoard.map((r) => r.map((square) => ({ ...square })))
@@ -44,6 +54,13 @@ export default function Board() {
 		})
 	}
 
+	/**
+	 * Appends chess piece to black or white tally array based on color
+	 *
+	 * @param {Object} piece - Chess piece
+	 *  - {string} .piece - Type of chess piece ('p', 'r', 'n', 'b', 'q', 'k')
+	 *  - {String} .color - Color of chess piece ('white' or 'black')
+	 */
 	const capturePiece = (piece) => {
 		if (piece.color === "black") {
 			setWhiteTally((prevTally) => [...prevTally, piece.piece])
@@ -52,6 +69,13 @@ export default function Board() {
 		}
 	}
 
+	/**
+	 * Checks if it is the given player's turn
+	 *
+	 * @param {string} color - Color of player ('white' or 'black')
+	 *
+	 * @returns {boolean} - Return true if it is the given player's turn
+	 */
 	const isTurn = (color) => {
 		return (
 			(color === "white" && isWhiteTurn.current) ||
@@ -59,6 +83,14 @@ export default function Board() {
 		)
 	}
 
+	/**
+	 * Modifies position of reference of whiteKing or blackKing
+	 *
+	 * @param {Object} pos - Position of piece on chessBoard
+	 *  - {number} row - Row index of chessBoard
+	 *  - {number} col - Column index of chessBoard
+	 * @param {string} color - Color of player ('white' or 'black')
+	 */
 	const setKingPos = (pos, color) => {
 		if (color === "white") {
 			whiteKing.current = { ...pos }
@@ -67,6 +99,15 @@ export default function Board() {
 		}
 	}
 
+	/**
+	 * Sets promotionSquare state
+	 *
+	 * @param {Object} square - Element of chessBoard
+	 *  - {number} row - Row index of chessBoard
+	 *  - {number} col - Column index of chessBoard
+	 *  - {string} .piece - Type of chess piece ('p', 'r', 'n', 'b', 'q', 'k')
+	 *  - {String} .color - Color of chess piece ('white' or 'black')
+	 */
 	const pawnPromotion = (square) => {
 		if (square.piece !== "p") return
 		if (square.color === "black" && square.row !== 7) return
@@ -74,9 +115,20 @@ export default function Board() {
 		setPromotionSquare(square)
 	}
 
-	//TODO integrate onDrag
+	/**
+	 * Handles click event on a square of chessBoard, managing piece selection,
+	 * move validation, and highlighting indicators for good or bad moves.
+	 *
+	 * Modifies the properties of the chessBoard state to support piece movement and castsling.
+	 *
+	 * @param {number} row - Row index of chessBoard
+	 * @param {number} col - Column index of chessBoard
+	 */
+	//TODO Integrate onDrag
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = chessBoard[row][col]
+
+		// Piece previously selected
 		if (selectedPiece) {
 			const fromPos = { row: selectedPiece.row, col: selectedPiece.col }
 			const toPos = { row, col }
@@ -85,11 +137,14 @@ export default function Board() {
 
 			const castleBoard = canCastle(chessBoard, fromPos, toPos, castlePieces.current)
 
+			// Check if castle move
 			if (castleBoard) {
 				castleBoard[fromPos.row][fromPos.col].selected = false
 				endMove(castleBoard, castleBoard[fromPos.row][fromPos.col].color)
 				setKingPos(toPos, castleBoard[toPos.row][toPos.col].color)
-			} else {
+			}
+			// Checks for valid regular move
+			else {
 				const isValidMove = validateMove(chessBoard, fromPos, toPos)
 
 				if (!isValidMove || !movePiece(chessBoard, fromPos, toPos)) {
@@ -108,12 +163,30 @@ export default function Board() {
 		}
 	}
 
+	/**
+	 * HandlesClickEvent of pawn promotion selection
+	 *
+	 * Modifies 'piece' and 'color' propeerty of square containing pawn based on selection.
+	 * Resets the promotionSquare to null and sets the promotionColor to trigger a useEffect.
+	 *
+	 * @param {number} row - Row index of chessBoard
+	 * @param {number} col - Column index of chessBoard
+	 * @param {string} piece - Type of chess piece ('p', 'r', 'n', 'b', 'q', 'k')
+	 * @param {String} color - Color of chess piece ('white' or 'black')
+	 */
 	const handlePromotionClick = (row, col, piece, color) => {
 		setBoardPiece(row, col, "piece", piece)
 		setBoardPiece(row, col, "color", color)
 		setPromotionSquare(null)
 		setPromotionColor(color)
 	}
+	/**
+	 * Effect triggered when the promotion color is set.
+	 *
+	 * Creates a copy of chessBoard and updates board if checkmate or stalemate
+	 * found based on the opponent's king position after a pawn promotion.
+	 */
+	// TODO use endmove
 	useEffect(() => {
 		if (promotionColor) {
 			const newBoard = chessBoard.map((r) => r.map((square) => ({ ...square })))
@@ -131,14 +204,28 @@ export default function Board() {
 		setPromotionColor(false)
 	}, [promotionColor])
 
+	/**
+	 * Handles bad selection indication by highlighting the given square
+	 * for a brief moment and then resetting its state.
+	 *
+	 * @param {number} row - Row index of chessBoard
+	 * @param {number} col - Column index of chessBoard
+	 */
 	const handleBadSelection = (row, col) => {
 		setBoardPiece(row, col, "badSelect", true)
 
-		setTimeout(() => {
+		const timeoutId = setTimeout(() => {
 			setBoardPiece(row, col, "badSelect", false)
 		}, 200)
+
+		return () => clearTimeout(timeoutId)
 	}
 
+	/**
+	 * Handles play again button reinitializing and setting chessBoard to a starting board
+	 * and reseting isWhiteTurn, whiteKing, blackKing, isGameOver, mateStatus,
+	 * whiteTally, and blacktally to default values.
+	 */
 	const handlePlayAgainBtn = () => {
 		setChessBoard(boardInit())
 		isWhiteTurn.current = true
@@ -150,6 +237,14 @@ export default function Board() {
 		setBlackTally([])
 	}
 
+	/**
+	 * Checks the position of a chess piece and sets the corresponding index in
+	 * castlePieces array to true if piece is a castling piece.
+	 *
+	 * @param {Object} pos - Position of piece on chessBoard
+	 *  - {number} row - Row index of chessBoard
+	 *  - {number} col - Column index of chessBoard
+	 */
 	const setCastlePiecesMoved = (pos) => {
 		if (pos.row === 7) {
 			switch (pos.col) {
@@ -182,6 +277,22 @@ export default function Board() {
 		}
 	}
 
+	/**
+	 * Moves a chess piece from one position to another on the board.
+	 *
+	 * Checks if the move is valid, updates the board state, and handles
+	 * special cases such as capturing pieces, castling, and pawn promotion.
+	 *
+	 * @param {Array<Array<Object>>} board - Current state of chessBoard
+	 * @param {Object} fromPos - Current position of the piece being moved.
+	 *  - {number} row - Row index of board
+	 *  - {number} col - Column index of board
+	 * @param {Object} toPos - Target position where the piece will be moved.
+	 *  - {number} row - Row index of board
+	 *  - {number} col - Column index of board
+	 *
+	 * * @returns {boolean} - Returns true if the move was successful, false otherwise.
+	 */
 	const movePiece = (board, fromPos, toPos) => {
 		const fromSquare = board[fromPos.row][fromPos.col]
 		const toSquare = board[toPos.row][toPos.col]
@@ -200,7 +311,7 @@ export default function Board() {
 		const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 		newBoard[fromPos.row][fromPos.col].selected = false
 
-		// Only set chessBoard to newBoard if King is not checked
+		// Only set chessBoard to newBoard if King is not checked after move
 		const king = fromSquare.color === "white" ? whiteKing.current : blackKing.current
 		if (isKingChecked(newBoard, king.row, king.col)) {
 			if (fromSquare.piece !== "k") return false
@@ -220,9 +331,19 @@ export default function Board() {
 		return true
 	}
 
+	/**
+	 * Updates entire chessBoard state
+	 * Switches turn to the opposing player
+	 * Checks for checkmate or stale mate then then updates isGameOver and mateStatus
+	 *
+	 * @param {Array<Array<Object>>} board - Copy of chessboard after the move.
+	 * @param {string} color - The color of the player who just moved ("white" or "black").
+	 */
+	//TODO breakdown even more
 	const endMove = (board, color) => {
-		isWhiteTurn.current = !isWhiteTurn.current
 		setChessBoard(board)
+
+		isWhiteTurn.current = !isWhiteTurn.current
 
 		const oppKingPos = color === "white" ? blackKing.current : whiteKing.current
 		const oppKingColor = color === "white" ? "black" : "white"
