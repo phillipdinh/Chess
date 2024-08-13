@@ -9,8 +9,9 @@ import "../../styles.css"
 
 export default function Board() {
 	/* TODO 
-    - Use global state providers
+    - Use global state providersz
     - Try to reorganize states
+    - Fix info css
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -112,6 +113,9 @@ export default function Board() {
 		blackKing.current = { row: 0, col: 4 }
 		setIsGameOver(false)
 		setMateStatus(false)
+		setWhiteTally([])
+		setBlackTally([])
+		setIsWhiteTurn(true)
 	}
 	const movePiece = (board, fromPos, toPos) => {
 		const fromSquare = board[fromPos.row][fromPos.col]
