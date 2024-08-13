@@ -6,6 +6,12 @@
         - Threefold Repition
         - 50 Move rule
     */
+const GAME_STATUS = {
+	CHECKMATE: "checkmate",
+	STALEMATE: "stalemate",
+	NOT_CHECKMATE: false
+}
+
 const newBoardSetup = [
 	["r", "n", "b", "q", "k", "b", "n", "r"],
 	["p", "p", "p", "p", "p", "p", "p", "p"],
@@ -43,6 +49,7 @@ export const boardInit = () => {
 	}
 	return board
 }
+
 export function tryMove(board, fromPos, toPos, piece, color) {
 	const newBoard = board.map((r) => r.map((square) => ({ ...square })))
 
@@ -60,18 +67,10 @@ export function tryMove(board, fromPos, toPos, piece, color) {
 
 	return newBoard
 }
-
-const GAME_STATUS = {
-	CHECKMATE: "checkmate",
-	STALEMATE: "stalemate",
-	NOT_CHECKMATE: false
-}
-
 /*
-- Castle
-    - Change kingPos
-    - Change board
+- TODO Castle
     - Fix queen check
+    - 
 */
 export function canCastle(board, fromPos, toPos, pieceMoved) {
 	const fromSquare = board[fromPos.row][fromPos.col]
@@ -105,18 +104,18 @@ export function canCastle(board, fromPos, toPos, pieceMoved) {
 	const startCol = Math.min(fromSquare.col, rookSquare.col) + 1
 	const endCol = Math.max(fromSquare.col, rookSquare.col)
 
-	// FIXME doesn work
 	// Check if pieces are empty between king and rook
 	for (let col = startCol; col < endCol; col++) {
 		console.log(board[toPos.row][col])
 		if (board[toPos.row][col].piece != null) return false
 	}
 
-	if (color === "white" && pieceMoved[0] && pieceMoved[1]) {
-		return false
-	} else if (color === "black" && pieceMoved[2] && pieceMoved[2]) {
-		return false
-	}
+	// FIXME
+	// if (color === "white" && pieceMoved[0] && pieceMoved[1]) {
+	// 	return false
+	// } else if (color === "black" && pieceMoved[3] && pieceMoved[4]) {
+	// 	return false
+	// }
 
 	console.log("Can Castle")
 	const rookPos = { row: rookSquare.row, col: rookSquare.col }
@@ -133,6 +132,7 @@ export function canCastle(board, fromPos, toPos, pieceMoved) {
 	console.log("True")
 	return moveKingBoard
 }
+
 export function getMate(board, kingPos, kingColor) {
 	// console.log(kingPos)
 	// console.log(board)
@@ -145,21 +145,21 @@ export function getMate(board, kingPos, kingColor) {
 
 	return GAME_STATUS.CHECKMATE
 }
+
 export function isKingChecked(board, kingRow, kingCol) {
 	console.log(board)
 	const king = board[kingRow][kingCol]
+
 	for (let row of board) {
 		for (let square of row) {
 			if (!square.color || square.color === king.color) {
 				continue
 			}
-			if (
-				validateMove(
-					board,
-					{ row: square.row, col: square.col },
-					{ row: king.row, col: king.col }
-				)
-			) {
+
+			const squarePos = { row: square.row, col: square.col }
+			const kingPos = { row: king.row, col: king.col }
+
+			if (validateMove(board, squarePos, kingPos)) {
 				console.log(square, kingRow, king.color)
 				return true
 			}
@@ -167,6 +167,7 @@ export function isKingChecked(board, kingRow, kingCol) {
 	}
 	return false
 }
+
 function canKingMove(board, kingPos, kingColor) {
 	for (let r = -1; r <= 1; r++) {
 		for (let c = -1; c <= 1; c++) {
@@ -175,16 +176,12 @@ function canKingMove(board, kingPos, kingColor) {
 
 			if (r === 0 && c === 0) continue
 			if (newRow < 0 || newRow >= 8 || newCol < 0 || newCol >= 8) continue
-			if (
-				!validateKingMove(
-					board,
-					{ row: kingPos.row, col: kingPos.col },
-					{ row: newRow, col: newCol }
-				)
-			)
-				continue
+
+			const newPos = { row: newRow, col: newCol }
+			if (!validateKingMove(board, kingPos, newPos)) continue
 
 			const newBoard = tryMove(board, kingPos, { row: newRow, col: newCol }, "k", kingColor)
+
 			if (!isKingChecked(newBoard, newRow, newCol)) {
 				console.log("CAN MOVE")
 				return true
@@ -194,10 +191,12 @@ function canKingMove(board, kingPos, kingColor) {
 	console.log("CHECKMATE")
 	return false
 }
+
 function canPieceBlock(board, kingPos, kingColor) {
 	for (let row of board) {
 		for (let square of row) {
 			if (square.color !== kingColor) continue
+
 			switch (square.piece) {
 				case "p":
 					if (canPawnBlock(board, square, kingPos)) return true
@@ -220,6 +219,7 @@ function canPieceBlock(board, kingPos, kingColor) {
 		}
 	}
 }
+
 //TODO enpassant and double block
 function canPawnBlock(board, fromSquare, kingPos) {
 	const direction = fromSquare.color === "white" ? -1 : 1
@@ -228,7 +228,9 @@ function canPawnBlock(board, fromSquare, kingPos) {
 
 	for (let c = -1; c <= 1; c++) {
 		toPos.col = fromPos.col + c
+
 		if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) continue
+
 		if (validatePawnMove(board, fromPos, toPos)) {
 			const newBoard = tryMove(board, fromPos, toPos, fromSquare.piece, fromSquare.color)
 
@@ -240,6 +242,7 @@ function canPawnBlock(board, fromSquare, kingPos) {
 	}
 	return false
 }
+
 function canOrthogonalBlock(board, fromSquare, kingPos) {
 	const fromPos = { row: fromSquare.row, col: fromSquare.col }
 
@@ -287,6 +290,7 @@ function canDiagonalBlock(board, fromSquare, kingPos) {
 		while (true) {
 			toPos.row += r
 			toPos.col += c
+
 			if (toPos.row < 0 || toPos.row >= 8 || toPos.col < 0 || toPos.col >= 8) break
 
 			if (!validateDiagonalMove(board, fromPos, toPos)) break
@@ -301,18 +305,22 @@ function canDiagonalBlock(board, fromSquare, kingPos) {
 	}
 	return false
 }
+
 function canQueenBlock(board, fromSquare, kingPos) {
 	return (
 		canDiagonalBlock(board, fromSquare, kingPos) ||
 		canOrthogonalBlock(board, fromSquare, kingPos)
 	)
 }
+
 function canRookBlock(board, fromSquare, kingPos) {
 	return canOrthogonalBlock(board, fromSquare, kingPos)
 }
+
 function canBishopBlock(board, fromSquare, kingPos) {
 	return canDiagonalBlock(board, fromSquare, kingPos)
 }
+
 function canKnightBlock(board, fromSquare, kingPos) {
 	const knightMoves = [
 		{ row: -2, col: -1 },
@@ -341,9 +349,9 @@ function canKnightBlock(board, fromSquare, kingPos) {
 			}
 		}
 	}
-
 	return false
 }
+
 export function validateMove(board, fromPos, toPos) {
 	switch (board[fromPos.row][fromPos.col].piece) {
 		case "p":
@@ -362,6 +370,7 @@ export function validateMove(board, fromPos, toPos) {
 			return false
 	}
 }
+
 function validateOrthogonalMove(board, fromPos, toPos) {
 	const fromColor = board[fromPos.row][fromPos.col].color
 	const toColor = board[toPos.row][toPos.col].color
@@ -369,9 +378,11 @@ function validateOrthogonalMove(board, fromPos, toPos) {
 	if ((fromPos.row !== toPos.row && fromPos.col !== toPos.col) || fromColor === toColor) {
 		return false
 	}
+
 	if (fromPos.row === toPos.row) {
 		let startCol = Math.min(fromPos.col, toPos.col)
 		let endCol = Math.max(fromPos.col, toPos.col)
+
 		for (let col = startCol + 1; col <= endCol - 1; col++) {
 			if (board[toPos.row][col].piece) {
 				return false
@@ -380,6 +391,7 @@ function validateOrthogonalMove(board, fromPos, toPos) {
 	} else {
 		let startRow = Math.min(fromPos.row, toPos.row)
 		let endRow = Math.max(fromPos.row, toPos.row)
+
 		for (let row = startRow + 1; row < endRow; row++) {
 			if (board[row][toPos.col].piece) {
 				return false
@@ -388,15 +400,15 @@ function validateOrthogonalMove(board, fromPos, toPos) {
 	}
 	return true
 }
+
 function validateDiagonalMove(board, fromPos, toPos) {
 	const fromSquare = board[fromPos.row][fromPos.col]
 	const toSquare = board[toPos.row][toPos.col]
-	if (
-		Math.abs(fromPos.row - toPos.row) !== Math.abs(fromPos.col - toPos.col) ||
-		fromSquare.color === toSquare.color
-	) {
-		return false
-	}
+
+	if (Math.abs(fromPos.row - toPos.row) !== Math.abs(fromPos.col - toPos.col)) return false
+
+	if (fromSquare.color === toSquare.color) return false
+
 	const rowDirection = toPos.row > fromPos.row ? 1 : -1
 	const colDirection = toPos.col > fromPos.col ? 1 : -1
 
@@ -412,68 +424,70 @@ function validateDiagonalMove(board, fromPos, toPos) {
 	}
 	return true
 }
+
 function validateKingMove(board, fromPos, toPos) {
-	if (
-		Math.max(Math.abs(fromPos.row - toPos.row), Math.abs(fromPos.col - toPos.col)) > 1 ||
-		board[fromPos.row][fromPos.col].color === board[toPos.row][toPos.col].color
-	) {
+	if (Math.max(Math.abs(fromPos.row - toPos.row), Math.abs(fromPos.col - toPos.col)) > 1) {
 		return false
 	}
+
+	if (board[fromPos.row][fromPos.col].color === board[toPos.row][toPos.col].color) {
+		return false
+	}
+
 	return true
 }
+
 function validateQueenMove(board, fromPos, toPos) {
 	return (
 		validateOrthogonalMove(board, fromPos, toPos) || validateDiagonalMove(board, fromPos, toPos)
 	)
 }
+
 function validateRookMove(board, fromPos, toPos) {
 	return validateOrthogonalMove(board, fromPos, toPos)
 }
+
 function validateBishopMove(board, fromPos, toPos) {
 	return validateDiagonalMove(board, fromPos, toPos)
 }
+
 function validateKnightMove(board, fromPos, toPos) {
 	const fromSquare = board[fromPos.row][fromPos.col]
 	const toSquare = board[toPos.row][toPos.col]
 	const rowDiff = Math.abs(fromPos.row - toPos.row)
 	const colDiff = Math.abs(fromPos.col - toPos.col)
 
-	if (
-		fromSquare.color !== toSquare.color &&
-		((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2))
-	) {
-		return true
-	}
+	if (fromSquare.color === toSquare.color) return false
+
+	if ((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2)) return true
+
 	return false
 }
+
 function validatePawnMove(board, fromPos, toPos) {
 	//TODO: enpassant
 	const fromColor = board[fromPos.row][fromPos.col].color
 	const toColor = board[toPos.row][toPos.col].color
 	const direction = fromColor === "white" ? -1 : 1
 
-	//prettier-ignore
-	const isFirstMove = (fromPos.row === 1 && fromColor === "black") || 
-                        (fromPos.row === 6 && fromColor === "white")
+	const isFirstMove =
+		(fromPos.row === 1 && fromColor === "black") || (fromPos.row === 6 && fromColor === "white")
+
 	const isDiagonalMove =
 		Math.abs(fromPos.col - toPos.col) === 1 && toPos.row === fromPos.row + direction
+
 	const isForwardMove = toPos.row === fromPos.row + direction && toPos.col === fromPos.col
+
 	const isDoubleMove =
 		isFirstMove && toPos.row === fromPos.row + direction * 2 && toPos.col === fromPos.col
 
-	if (isDiagonalMove && toColor && fromColor !== toColor) {
-		return true
-	}
+	if (isDiagonalMove && toColor && fromColor !== toColor) return true
 
-	if (toColor != null) {
-		return false
-	}
+	if (toColor != null) return false
 
-	if (isForwardMove) {
-		return true
-	}
-	if (isDoubleMove && board[toPos.row - direction][toPos.col].color == null) {
-		return true
-	}
+	if (isForwardMove) return true
+
+	if (isDoubleMove && board[toPos.row - direction][toPos.col].color == null) return true
+
 	return false
 }
