@@ -29,11 +29,9 @@ export default function Board() {
 	const [promotionColor, setPromotionColor] = useState(null)
 
 	/* [r,k,r,r,k,r]
-    - white 0,1,2
-    - black 3,4,5
-    */
-	const [castlePieces, setCastlePieces] = useState(Array(6).fill(false))
-
+      - white 0,1,2
+      - black 3,4,5 */
+	const castlePieces = useRef(Array(6).fill(false))
 	const whiteKing = useRef({ row: 7, col: 4 })
 	const blackKing = useRef({ row: 0, col: 4 })
 	const isWhiteTurn = useRef(true)
@@ -45,6 +43,7 @@ export default function Board() {
 			return newBoard
 		})
 	}
+
 	const capturePiece = (piece) => {
 		if (piece.color === "black") {
 			setWhiteTally((prevTally) => [...prevTally, piece.piece])
@@ -52,14 +51,30 @@ export default function Board() {
 			setBlackTally((prevTally) => [...prevTally, piece.piece])
 		}
 	}
+
+	const isTurn = (color) => {
+		return (
+			(color === "white" && isWhiteTurn.current) ||
+			(color === "black" && !isWhiteTurn.current)
+		)
+	}
+
+	const setKingPos = (pos, color) => {
+		if (color === "white") {
+			whiteKing.current = { ...pos }
+		} else {
+			blackKing.current = { ...pos }
+		}
+	}
+
 	const pawnPromotion = (square) => {
 		if (square.piece !== "p") return
 		if (square.color === "black" && square.row !== 7) return
 		if (square.color === "white" && square.row !== 0) return
 		setPromotionSquare(square)
 	}
+
 	//TODO integrate onDrag
-	// set rook and king move
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = chessBoard[row][col]
 		if (selectedPiece) {
@@ -68,7 +83,7 @@ export default function Board() {
 
 			setBoardPiece(fromPos.row, fromPos.col, "selected", false)
 
-			const castleBoard = canCastle(chessBoard, fromPos, toPos, castlePieces)
+			const castleBoard = canCastle(chessBoard, fromPos, toPos, castlePieces.current)
 
 			if (castleBoard) {
 				castleBoard[fromPos.row][fromPos.col].selected = false
@@ -83,7 +98,6 @@ export default function Board() {
 				}
 			}
 			setSelectedPiece(null)
-			console.log(chessBoard)
 		}
 		// Valid piece selection
 		else if (isTurn(clickedSquare.color)) {
@@ -93,6 +107,7 @@ export default function Board() {
 			handleBadSelection(row, col)
 		}
 	}
+
 	const handlePromotionClick = (row, col, piece, color) => {
 		setBoardPiece(row, col, "piece", piece)
 		setBoardPiece(row, col, "color", color)
@@ -123,6 +138,7 @@ export default function Board() {
 			setBoardPiece(row, col, "badSelect", false)
 		}, 200)
 	}
+
 	const handlePlayAgainBtn = () => {
 		setChessBoard(boardInit())
 		isWhiteTurn.current = true
@@ -133,50 +149,39 @@ export default function Board() {
 		setWhiteTally([])
 		setBlackTally([])
 	}
-	function setCastlePiecesMoved(pos) {
-		if (pos.row === 0) {
+
+	const setCastlePiecesMoved = (pos) => {
+		if (pos.row === 7) {
 			switch (pos.col) {
 				case 0:
+					castlePieces.current[0] = true
 					break
-
 				case 4:
+					castlePieces.current[1] = true
 					break
-
 				case 7:
+					castlePieces.current[2] = true
 					break
-
 				default:
-					return
+					console.log("Not Castle Piece")
 			}
-		} else if (pos.row === 7) {
+		} else if (pos.row === 0) {
 			switch (pos.col) {
 				case 0:
+					castlePieces.current[3] = true
 					break
-
 				case 4:
+					castlePieces.current[4] = true
 					break
-
 				case 7:
+					castlePieces.current[5] = true
 					break
-
 				default:
-					return
+					console.log("Not Castle Piece")
 			}
 		}
 	}
-	function isTurn(color) {
-		return (
-			(color === "white" && isWhiteTurn.current) ||
-			(color === "black" && !isWhiteTurn.current)
-		)
-	}
-	function setKingPos(pos, color) {
-		if (color === "white") {
-			whiteKing.current = { ...pos }
-		} else {
-			blackKing.current = { ...pos }
-		}
-	}
+
 	const movePiece = (board, fromPos, toPos) => {
 		const fromSquare = board[fromPos.row][fromPos.col]
 		const toSquare = board[toPos.row][toPos.col]
@@ -207,11 +212,15 @@ export default function Board() {
 			capturePiece(toSquare)
 		}
 
+		if (fromSquare.piece === "k" || fromSquare.piece === "r") {
+			setCastlePiecesMoved(fromPos)
+		}
 		pawnPromotion(newBoard[toPos.row][toPos.col])
 		endMove(newBoard, fromSquare.color)
 		return true
 	}
-	function endMove(board, color) {
+
+	const endMove = (board, color) => {
 		isWhiteTurn.current = !isWhiteTurn.current
 		setChessBoard(board)
 
@@ -226,6 +235,7 @@ export default function Board() {
 			setMateStatus(mateStatus)
 		}
 	}
+
 	return (
 		<div className="page">
 			<div className="board">

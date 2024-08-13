@@ -1,11 +1,3 @@
-/*
-    TODO
-    - Draws
-        - Dead Position
-        - Mutual Agreement
-        - Threefold Repition
-        - 50 Move rule
-    */
 const GAME_STATUS = {
 	CHECKMATE: "checkmate",
 	STALEMATE: "stalemate",
@@ -67,23 +59,16 @@ export function tryMove(board, fromPos, toPos, piece, color) {
 
 	return newBoard
 }
-/*
-- TODO Castle
-    - Fix queen check
-    - 
-*/
-export function canCastle(board, fromPos, toPos, pieceMoved) {
+
+export function canCastle(board, fromPos, toPos, castlePieces) {
 	const fromSquare = board[fromPos.row][fromPos.col]
 	const color = fromSquare.color
 
 	if (fromSquare.piece !== "k") return false
 
-	console.log("Before check")
 	if (isKingChecked(board, fromSquare.row, fromSquare.col)) return false
 
-	console.log("Before move position")
 	// Check if actually trying to castle
-	console.dir(toPos)
 	if (
 		!(
 			(toPos.row === 0 && (toPos.col === 2 || toPos.col === 6)) ||
@@ -95,29 +80,33 @@ export function canCastle(board, fromPos, toPos, pieceMoved) {
 
 	const rookSquare = toPos.col === 2 ? board[toPos.row][0] : board[toPos.row][7]
 
-	console.log("Before rook check")
 	if (rookSquare.piece !== "r") return false
 
-	console.log("Before color check")
 	if (fromSquare.color !== rookSquare.color) return false
 
+	// Check if pieces are empty between king and rook
 	const startCol = Math.min(fromSquare.col, rookSquare.col) + 1
 	const endCol = Math.max(fromSquare.col, rookSquare.col)
-
-	// Check if pieces are empty between king and rook
 	for (let col = startCol; col < endCol; col++) {
-		console.log(board[toPos.row][col])
 		if (board[toPos.row][col].piece != null) return false
 	}
 
-	// FIXME
-	// if (color === "white" && pieceMoved[0] && pieceMoved[1]) {
-	// 	return false
-	// } else if (color === "black" && pieceMoved[3] && pieceMoved[4]) {
-	// 	return false
-	// }
+	// [r,k,r,r,k,r]
+	if (color === "white") {
+		if (castlePieces[1]) return false
 
-	console.log("Can Castle")
+		if (rookSquare.col === 0 && castlePieces[0]) return false
+
+		if (rookSquare.col === 7 && castlePieces[2]) return false
+	}
+	if (color === "black") {
+		if (castlePieces[4]) return false
+
+		if (rookSquare.col === 0 && castlePieces[3]) return false
+
+		if (rookSquare.col === 7 && castlePieces[5]) return false
+	}
+
 	const rookPos = { row: rookSquare.row, col: rookSquare.col }
 
 	const rookMoveCol = toPos.col === 2 ? 3 : 5
@@ -126,17 +115,12 @@ export function canCastle(board, fromPos, toPos, pieceMoved) {
 	const moveRookBoard = tryMove(board, rookPos, rookMovePos, "r", color)
 	const moveKingBoard = tryMove(moveRookBoard, fromPos, toPos, "k", color)
 
-	console.log("After check")
 	if (isKingChecked(moveKingBoard, toPos.row, toPos.col)) return false
 
-	console.log("True")
 	return moveKingBoard
 }
 
 export function getMate(board, kingPos, kingColor) {
-	// console.log(kingPos)
-	// console.log(board)
-
 	if (canPieceBlock(board, kingPos, kingColor) || canKingMove(board, kingPos, kingColor)) {
 		return GAME_STATUS.NOT_CHECKMATE
 	}
@@ -147,22 +131,16 @@ export function getMate(board, kingPos, kingColor) {
 }
 
 export function isKingChecked(board, kingRow, kingCol) {
-	console.log(board)
 	const king = board[kingRow][kingCol]
 
 	for (let row of board) {
 		for (let square of row) {
-			if (!square.color || square.color === king.color) {
-				continue
-			}
+			if (!square.color || square.color === king.color) continue
 
 			const squarePos = { row: square.row, col: square.col }
 			const kingPos = { row: king.row, col: king.col }
 
-			if (validateMove(board, squarePos, kingPos)) {
-				console.log(square, kingRow, king.color)
-				return true
-			}
+			if (validateMove(board, squarePos, kingPos)) return true
 		}
 	}
 	return false
