@@ -3,7 +3,14 @@ import React, { useState, useRef, useEffect } from "react"
 import Square from "./square"
 import GameInfo from "../gameComponents/gameInfo"
 import PromotionChoices from "../gameComponents/promotionChoices"
-import { boardInit, getMate, isKingChecked, validateMove, tryMove } from "../chessUtils/boardHelper"
+import {
+	boardInit,
+	getMate,
+	isKingChecked,
+	validateMove,
+	tryMove,
+	canCastle
+} from "../chessUtils/boardHelper"
 
 import "../../styles.css"
 
@@ -11,7 +18,7 @@ export default function Board() {
 	/* TODO 
     - Use global state providersz
     - Try to reorganize states
-    - Fix info css
+
     */
 	const [chessBoard, setChessBoard] = useState(boardInit())
 	const [selectedPiece, setSelectedPiece] = useState(null)
@@ -21,6 +28,12 @@ export default function Board() {
 	const [isGameOver, setIsGameOver] = useState(false)
 	const [mateStatus, setMateStatus] = useState(false)
 	const [promotionColor, setPromotionColor] = useState(null)
+
+	/* [r,k,r,k]
+    - white 0,1
+    - black 2,3
+    */
+	const [pieceMoved, setPieceMoved] = useState([false, false, false, false])
 
 	const whiteKing = useRef({ row: 7, col: 4 })
 	const blackKing = useRef({ row: 0, col: 4 })
@@ -49,6 +62,7 @@ export default function Board() {
 		setPromotionSquare(square)
 	}
 	//TODO integrate onDrag
+	// set rook and king move
 	const handleSquareClick = (row, col) => {
 		const clickedSquare = chessBoard[row][col]
 		if (selectedPiece) {
@@ -57,14 +71,32 @@ export default function Board() {
 
 			setBoardPiece(fromPos.row, fromPos.col, "selected", false)
 
-			const isValidMove = validateMove(chessBoard, fromPos, toPos)
+			// TODO unnest and handleBadSelection in castle
 
-			if (isValidMove && movePiece(chessBoard, fromPos, toPos)) {
+			const castleBoard = canCastle(chessBoard, fromPos, toPos, pieceMoved)
+			if (castleBoard) {
+				// TODO Modularize
+				castleBoard[fromPos.row][fromPos.col].selected = false
+				setChessBoard(castleBoard)
+				setIsWhiteTurn((prevTurn) => !prevTurn)
+
+				if (castleBoard[toPos.row][toPos.col].color === "white") {
+					whiteKing.current = { ...toPos }
+				} else {
+					blackKing.current = { ...toPos }
+				}
 			} else {
-				handleBadSelection(fromPos.row, fromPos.col)
-				handleBadSelection(row, col)
+				const isValidMove = validateMove(chessBoard, fromPos, toPos, pieceMoved)
+
+				if (isValidMove && movePiece(chessBoard, fromPos, toPos)) {
+				} else {
+					handleBadSelection(fromPos.row, fromPos.col)
+					handleBadSelection(row, col)
+				}
 			}
+
 			setSelectedPiece(null)
+			console.log(chessBoard)
 		}
 		// Valid piece selection
 		else if (
@@ -121,8 +153,8 @@ export default function Board() {
 		const fromSquare = board[fromPos.row][fromPos.col]
 		const toSquare = board[toPos.row][toPos.col]
 
-		// console.log("from:", fromSquare.piece, fromPos.row, fromPos.col)
-		// console.log("to:", toSquare.piece, toPos.row, toPos.col)
+		console.log("from:", fromSquare.piece, fromPos.row, fromPos.col)
+		console.log("to:", toSquare.piece, toPos.row, toPos.col)
 		if (
 			(isWhiteTurn && fromSquare.color === "black") ||
 			(!isWhiteTurn && fromSquare.color === "white")
@@ -130,6 +162,8 @@ export default function Board() {
 			return false
 		}
 
+		console.log("is turn check")
+		// TODO modularize
 		if (fromSquare.piece === "k") {
 			if (fromSquare.color === "white") {
 				whiteKing.current = { ...toPos }
@@ -155,6 +189,7 @@ export default function Board() {
 			return false
 		}
 
+		console.log("after is King checked")
 		if (
 			(isWhiteTurn && toSquare.color === "black") ||
 			(!isWhiteTurn && toSquare.color === "white")
@@ -162,6 +197,7 @@ export default function Board() {
 			capturePiece(toSquare)
 		}
 
+		// Modularize
 		setIsWhiteTurn((prevTurn) => !prevTurn)
 		setChessBoard(newBoard)
 		pawnPromotion(newBoard[toPos.row][toPos.col])
@@ -178,6 +214,21 @@ export default function Board() {
 		}
 
 		return true
+	}
+	function endMove(board, color) {
+		setIsWhiteTurn((prevTurn) => !prevTurn)
+		setChessBoard(board)
+
+		const oppKingPos = color === "white" ? blackKing.current : whiteKing.current
+		const oppKingColor = color === "white" ? "black" : "white"
+
+		const mateStatus = getMate(board, oppKingPos, oppKingColor)
+
+		if (mateStatus === "checkmate" || mateStatus === "stalemate") {
+			console.log(mateStatus)
+			setIsGameOver(true)
+			setMateStatus(mateStatus)
+		}
 	}
 	return (
 		<div className="page">
